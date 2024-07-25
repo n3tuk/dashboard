@@ -1,0 +1,107 @@
+---
+project_name: dashboard
+version: 2
+
+release:
+  github:
+    owner: n3tuk
+    name: dashboard
+  name_template: |-
+    {{ .Tag }}
+changelog:
+  disable: true
+snapshot:
+  name_template: >-
+    {{ incpatch .Version }}~dev{{ .Now.Format "-20060102-1504" }}
+checksum:
+  name_template: |-
+    {{ .ProjectName }}-sha512
+  algorithm: sha3-512
+
+builds:
+  - id: dashboard
+    main: main.go
+    binary: dashboard
+    env:
+      - CGO_ENABLED=0
+    ldflags: >-
+      -s -w
+      -X 'main.Branch={{ .Branch }}'
+      -X 'main.Commit={{ .ShortCommit }}'
+      -X 'main.Version={{ .Version }}'
+      -X 'main.BuildDate={{ .Date }}'
+      -X 'main.Architecture={{ .Runtime.Goarch }}'
+    asmflags: >-
+      all=-trimpath={{ .Env.GOPATH }}
+    gcflags: >-
+      all=-trimpath={{ .Env.GOPATH }}
+    goos:
+      - 'linux'
+    goarch:
+      - 'arm64'
+      - 'amd64'
+    goarm:
+      - '7'
+    goamd64:
+      - 'v3'
+
+archives:
+  - id: dashboard-archive
+    name_template: |-
+      {{ .ProjectName }}-{{ .Version }}-{{ tolower .Os }}-{{ tolower .Arch }}
+    format: tar.gz
+    builds_info:
+      group: root
+      owner: root
+      mode: 0755
+      mtime: 2006-01-02T15:04:05Z
+    files:
+      - LICENSE
+
+# Create images for both amd64 and arm64 to give it the widest possible support
+dockers:
+  - id: '{{ .ProjectName }}-amd64'
+    goarch: amd64
+    image_templates:
+      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-amd64
+    dockerfile: Dockerfile
+    use: docker
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+
+  - id: '{{ .ProjectName }}-arm64'
+    goarch: arm64
+    image_templates:
+      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-arm64
+    dockerfile: Dockerfile
+    use: docker
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --label=org.opencontainers.image.version={{ .Version }}
+      - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.revision={{ .FullCommit }}
+
+# Build a set of manifests based on all the ways the GitHub Action could be
+# called, including as the main branch, both short and long commit IDs, and each of
+# Major, Major/Minor, and Major/Minor/Patch versions being tagged
+docker_manifests:
+  - name_template: ghcr.io/n3tuk/{{ .ProjectName }}:latest
+    use: docker
+    image_templates:
+      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-arm64
+
+  - name_template: ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}
+    use: docker
+    image_templates:
+      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-arm64
+
+  - name_template: ghcr.io/n3tuk/{{ .ProjectName }}:{{ .ShortCommit }}
+    use: docker
+    image_templates:
+      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-arm64

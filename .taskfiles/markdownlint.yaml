@@ -1,0 +1,43 @@
+---
+version: 3
+
+vars:
+  # ANSI Colours
+  cg: '\e[0;32m'
+  cc: '\e[0m'
+
+tasks:
+  default:
+    prefix: markdownlint
+    internal: true
+    silent: true
+    sources:
+      - '.*.md'
+      - '*.md'
+      - '.*/**.md'
+      - '**/*.md'
+      - '{{ .root }}/.markdownlint.yaml'
+      - '{{ .root }}/.markdownignore'
+      # This file is not a complete Markdown document, but a partial template
+      # which is used when creating pull requests within GitHub, so ignore it
+      - exclude: .github/PULL_REQUEST_TEMPLATE.md
+    vars:
+      files:
+        sh: |-
+          find . \
+               -ignore_readdir_race \
+               -type f \
+               -not \
+            \(     -path './.trivy/*' \
+               -or -path './pages/*' \
+            \) -and -iname '*.md' \
+            -printf '%P ' \
+          2> /dev/null || true
+    cmds:
+      - cmd: |-
+          [[ -n '{{ .files }}' ]] || exit 0
+          markdownlint \
+            --config .markdownlint.yaml \
+            --ignore-path .markdownignore \
+            {{ .files }}
+          echo -e '{{ .cg }}Passed{{ .cc }}'

@@ -1,0 +1,48 @@
+---
+# Enable the default rules
+default: true
+
+# ul-indent
+# The structure of cards in grids required non-standard indentations
+MD007: false
+
+# no-hard-tabs
+MD010:
+  code_blocks: true
+  ignore_code_languages: []
+  spaces_per_tab: 2
+
+# line-length
+MD013:
+  line_length: 80
+  heading_line_length: 80
+  # Exclude the following elements from
+  # maximum line-length checks
+  code_blocks: false
+  tables: false
+  strict: false
+  stern: false
+
+# list-marker-space
+# The set up of grids in mkdocs breaks the processing of lists
+MD030: false
+
+# no-inline-html
+MD033:
+  allowed_elements:
+    - 'a'
+    - 'pre'
+    - 'br'
+    - 'div'
+
+# no-bare-urls
+MD034: false
+
+# code-block-style
+MD046: false
+
+# link-image-reference-definitions
+# The use of admonitions in mkdocs breaks the processing of links within as the
+# text block is indented by four spaces (marking it as a code block by default)
+#   https://github.com/DavidAnson/markdownlint-cli2/issues/243
+MD053: false

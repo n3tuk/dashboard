@@ -1,0 +1,4 @@
+---
+logging:
+  json: true
+  level: debug

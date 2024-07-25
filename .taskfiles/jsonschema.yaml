@@ -1,0 +1,150 @@
+---
+version: 3
+
+vars:
+  # ANSI Colours
+  cg: '\e[0;32m'
+  cc: '\e[0m'
+
+tasks:
+  default:
+    desc: Validation the schema of YAML files in the repository
+    summary: |-
+      Validate the layout and content of the YAML files in this repository
+      using the JSON Schema files, including:
+
+      - Taskfiles (Taskfile.yaml, .taskfiles/*.yaml)
+      - GitHub Dependabot configuration (.github/dependabot.yaml)
+      - GitHub Workflows (.github/workflows/*.yaml)
+      - pre-commit Configuration (.pre-commit-config)
+    silent: true
+    cmds:
+      - task: taskfiles
+      - task: dependabot
+      - task: workflows
+      - task: pre-commit
+      - task: serve
+      - task: send
+
+  taskfiles:
+    internal: true
+    silent: true
+    sources:
+      - 'Taskfile.yaml'
+      - '.taskfiles/*.yaml'
+    cmds:
+      - cmd: |-
+          check-jsonschema \
+            --output-format text --no-cache --verbose \
+            --builtin-schema vendor.taskfile \
+            Taskfile.yaml .taskfiles/*.yaml
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  dependabot:
+    internal: true
+    silent: true
+    sources:
+      - '.github/dependabot.yaml'
+    cmds:
+      # Check that the dependabot.yaml file exists first, and fail cleanly if
+      # that is the case, otherwise check-jsonschema will fail the check
+      - cmd: |-
+          [[ -f .github/dependabot.yaml ]] || exit 0
+          check-jsonschema \
+            --output-format text --verbose \
+            --builtin-schema vendor.dependabot \
+            .github/dependabot.yaml
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  workflows:
+    internal: true
+    silent: true
+    sources:
+      - '.github/workflows/*.yaml'
+    vars:
+      files:
+        sh: |-
+          find .github/workflows \
+            -ignore_readdir_race \
+            -type f \
+            -iname '*.yaml' \
+            -printf '.github/workflows/%P ' \
+          2>/dev/null || true
+    cmds:
+      - cmd: |-
+          [[ -z '{{ .files }}' ]] && exit 0
+          check-jsonschema \
+            --output-format text --verbose \
+            --builtin-schema vendor.github-workflows \
+            {{ .files }}
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  pre-commit:
+    internal: true
+    silent: true
+    sources:
+      - '.pre-commit-config.yaml'
+    cmds:
+      - cmd: |-
+          [[ -f .pre-commit-config.yaml ]] || exit 0
+          check-jsonschema \
+            --output-format text --no-cache --verbose \
+            --schemafile https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/pre-commit-config.json \
+            .pre-commit-config.yaml
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  serve:schema:
+    internal: true
+    silent: true
+    sources:
+      - 'schemas/serve.json'
+    cmds:
+      - cmd: |-
+          check-jsonschema \
+            --output-format text --no-cache --verbose \
+            --check-metaschema schemas/serve.json
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  serve:
+    internal: true
+    silent: true
+    sources:
+      - 'schemas/serve.json'
+      - 'config/serve.yaml'
+    deps:
+      - task: serve:schema
+    cmds:
+      - cmd: |-
+          check-jsonschema \
+            --output-format text --no-cache --verbose \
+            --schemafile schemas/serve.json \
+            config/serve.yaml
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  send:schema:
+    internal: true
+    silent: true
+    sources:
+      - 'schemas/send.json'
+    cmds:
+      - cmd: |-
+          check-jsonschema \
+            --output-format text --no-cache --verbose \
+            --check-metaschema schemas/send.json
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  send:
+    internal: true
+    silent: true
+    sources:
+      - 'schemas/send.json'
+      - 'config/send.yaml'
+    deps:
+      - task: send:schema
+    cmds:
+      - cmd: |-
+          check-jsonschema \
+            --output-format text --no-cache --verbose \
+            --schemafile schemas/send.json \
+            config/send.yaml
+          echo -e '{{ .cg }}Passed{{ .cc }}'

@@ -1,0 +1,72 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v4.6.0
+    hooks:
+      - id: no-commit-to-branch
+        name: Check this commit is not to the main/master branch
+      - id: check-merge-conflict
+        name: Check for merge conflicts before committing
+      - id: check-case-conflict
+        name: Check for case conflicts for case-sensitive filesystems
+      - id: check-symlinks
+        name: Check for broken syslinks in the repository
+      - id: destroyed-symlinks
+        name: Check for destroyed symlinks in the repository
+      - id: check-added-large-files
+        name: Check no large files have been added to the commit
+      - id: trailing-whitespace
+        name: Check all trailing whitespace is removed
+      - id: end-of-file-fixer
+        name: Check all files end in a new-line only
+
+  - repo: https://github.com/zricethezav/gitleaks.git
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        name: Check for hard-coded secrets, keys, and credentials
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        name: Lint selected files with Prettier
+        args:
+          - --config=.prettier.yaml
+        additional_dependencies:
+          - prettier@3.3.2
+        types_or:
+          - markdown
+          - json
+          - yaml
+          - css
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli.git
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        name: Check general Markdown correctness and formatting
+        exclude: ^pages/
+        args:
+          - '--config'
+          - '.markdownlint.yaml'
+          - '--ignore-path'
+          - '.markdownignore'
+      - id: markdownlint
+        name: Check GitHub Pages Markdown correctness and formatting
+        files: ^pages/
+        args:
+          - '--config'
+          - 'pages/.markdownlint.yaml'
+          - '--ignore-path'
+          - 'pages/.markdownignore'
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema.git
+    rev: 0.29.0
+    hooks:
+      - name: Check the Taskfiles for correctness
+        id: check-taskfile
+      - name: Check Dependabot configuration for correctness
+        id: check-dependabot
+      - name: Check GitHub Workflows for correctness
+        id: check-github-workflows

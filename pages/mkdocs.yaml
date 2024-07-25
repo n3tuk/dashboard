@@ -1,0 +1,118 @@
+---
+site_name: Event Status Dashboard
+site_url: https://n3tuk.github.io/dashboard/
+
+repo_name: n3tuk/dashboard
+repo_url: https://github.com/n3tuk/dashboard
+edit_uri: blob/main/pages/docs/
+
+nav:
+  - Home: index.md
+  - Overview:
+      - overview.md
+      - License: license.md
+  - Guides: guides.md
+
+extra:
+  social:
+    - icon: fontawesome/solid/house
+      name: Event Status Dashboard Documentation
+      link: https://n3tuk.github.io/dashboard/
+
+copyright: >-
+  Copyright &copy; 2024 Jonathan Wright.
+
+theme:
+  name: material
+  favicon: assets/logo.svg
+  logo: assets/logo.svg
+  language: en
+  features:
+    - content.code.copy
+    - content.code.select
+    - content.code.annotation
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+    - navigation.tabs
+    - navigation.tracking
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.top
+    - toc.follow
+    - toc.integrate
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/eye
+    view: material/eye
+  palette:
+    - media: '(prefers-color-scheme)'
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
+
+extra_css:
+  - assets/custom.css
+
+markdown_extensions:
+  - abbr
+  - attr_list
+  - md_in_html
+  - admonition
+  - footnotes
+  - pymdownx.snippets
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+plugins:
+  - search
+  - privacy
+  - section-index
+  - git-revision-date-localized:
+      enabled: !ENV [CI, false]
+      type: timeago
+      enable_creation_date: true
+      exclude:
+        - index.md
+  - git-committers:
+      enabled: !ENV [CI, false]
+      repository: msicie/alta-aware-infra-users
+      branch: !ENV [GITHUB_HEAD_REF, 'main']
+      exclude:
+        - index.md
+
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: warn
+    unrecognized_links: warn

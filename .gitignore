@@ -1,0 +1,31 @@
+# Ignore cache files for Prettier linting and formatting checks
+.prettiercache
+
+# Ignore the Trivy cache and any .sarif files for uploading to GitHub
+.trivy/
+*.sarif
+
+# Ignore Taskfile processing directory and files
+.skip-pre-checks
+.task/
+
+# Ignore go test outputs and temporary files
+coverage.html
+coverage.out
+coverage/
+
+# Ignore goreleaser processing directories
+bin/
+dist/
+
+# Ignore CodeQL processing directory
+.codeql/
+
+# Ignore the tools/ directory for CI tooling setup
+tools/
+
+# Ignore mkdocs processing directories
+pages/dist/
+pages/public/
+pages/site/
+pages/.cache

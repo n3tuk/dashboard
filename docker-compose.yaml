@@ -1,0 +1,32 @@
+---
+version: '3.8'
+
+services:
+  activemq:
+    image: apache/activemq-artemis:2.35.0
+    container_name: activemq
+    ports:
+      - '8161:8161'
+      - '61616:61616'
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    command: >-
+      -jar DynamoDBLocal.jar -sharedDb -dbPath /data
+    container_name: dynamodb
+    ports:
+      - '8000:8000'
+    volumes:
+      - './docker/dynamodb:/data'
+
+networks:
+  internal:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+          ip_range: 172.28.1.0/24
+          gateway: 172.28.1.1
+          # aux_addresses:
+          #   host1: 172.28.1.5
+          #   host2: 172.28.1.6
+          #   host3: 172.28.1.7

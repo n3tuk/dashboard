@@ -1,0 +1,9 @@
+---
+web:
+  bind:
+    address: localhost
+    port: 8080
+
+logging:
+  json: true
+  level: debug

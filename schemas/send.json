@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/n3tuk/dashboard/blob/main/schemas/send.json",
+  "title": "dashboard send Configuration File Schema",
+  "description": "The configuration file for the dashboard application when processing send events",
+  "$defs": {
+    "endpoint-uri": {
+      "title": "The dashboard Endpoint URI",
+      "description": "The URI of the endpoint to connect to when sending dashboard events",
+      "default": "http://localhost:8080",
+      "examples": ["https://example.com", "http://localhost:8081"],
+      "type": "string",
+      "format": "uri"
+    },
+    "api-key": {
+      "title": "The dashboard API Key",
+      "description": "The API Key for the endpoint used for authentication when sending dashboard events",
+      "type": "string",
+      "format": "uri"
+    },
+    "logging": {
+      "title": "Logging Configuration",
+      "description": "Configure the logging output from the dashboard send command",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/logging-level"
+        },
+        "json": {
+          "$ref": "#/$defs/logging-json"
+        }
+      }
+    },
+    "logging-level": {
+      "description": "Set whether or not to use JSON-based structured logging",
+      "type": "string",
+      "enum": ["debug", "info", "warning", "error"]
+    },
+    "logging-json": {
+      "description": "Set whether or not to use JSON-based structured logging",
+      "type": "boolean"
+    }
+  },
+  "type": "object",
+  "required": ["endpoint-uri", "api-key"],
+  "additionalProperties": false,
+  "properties": {
+    "endpoint-uri": {
+      "$ref": "#/$defs/endpoint-uri"
+    },
+    "api-key": {
+      "$ref": "#/$defs/api-key"
+    },
+    "logging": {
+      "$ref": "#/$defs/logging"
+    }
+  }
+}

@@ -1,0 +1,87 @@
+---
+linters-settings:
+  nolintlint:
+    allow-unused: false
+    require-explanation: true
+    require-specific: true
+  decorder:
+    disable-dec-order-check: false
+    disable-init-func-first-check: false
+    disable-dec-num-check: false
+  dogsled:
+    max-blank-identifiers: 1
+  errchkjson:
+    check-error-free-encoding: true
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/n3tuk)
+      - localmodule
+      - alias
+      - blank
+    custom-order: true
+  godot:
+    scope: toplevel
+  godox:
+    keywords:
+      - TODO
+      - BUG
+  gofumpt:
+    module-path: github.com/n3tuk/dashboard
+    extra-rules: true
+  goimports:
+    local-prefixes: github.com/n3tuk/dashboard
+  gosec:
+    includes: [] # all
+  gosimple:
+    checks: ['all']
+  misspell:
+    locale: UK
+  staticcheck:
+    checks: ['all']
+  stylecheck:
+    checks: ['all']
+  whitespace:
+    multi-if: true
+    multi-func: true
+  wsl:
+    allow-cuddle-declarations: true
+    force-err-cuddling: true
+
+linters:
+  enable-all: true
+  disable:
+    # Go linter that checks if package imports are in a list of acceptable packages
+    - depguard
+    # Check if all structure fields are initialized
+    # (this is very noisy and many structs don't need to be complete)
+    - exhaustruct
+    # Check that no global variables exist
+    - gochecknoglobals
+    # Checks that no init functions are present in Go code
+    # (the cobra configurations make extensive use of inits)
+    - gochecknoinits
+    # Computes and checks the cyclomatic complexity of functions.
+    # (replaced by cyclop)
+    - gocyclo
+    # Nlreturn checks for a new line before return and branch statements to
+    # increase code clarity
+    # (this is better managed by wsl)
+    - nlreturn
+    # Checks that fmt.Sprintf can be replaced with a faster alternative
+    - perfsprint
+    # Check for slice declarations that could potentially be pre-allocated
+    # (should be done as part of performance testing)
+    - prealloc
+    # Checks that the length of a variable's name matches its scope
+    - varnamelen
+    # Check that errors returned from external packages are wrapped
+    - wrapcheck
+
+    ## Deprecated
+    - execinquery
+    - gomnd
+
+run:
+  timeout: 1m

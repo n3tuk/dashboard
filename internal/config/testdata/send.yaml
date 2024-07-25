@@ -1,0 +1,4 @@
+---
+logging:
+  json: false
+  level: info

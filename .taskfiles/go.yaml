@@ -1,0 +1,333 @@
+---
+version: 3
+output: prefixed
+interval: 5s
+
+vars:
+  # ANSI Colours
+  cr: '\e[1;31m'
+  cg: '\e[0;32m'
+  cw: '\e[1;37m'
+  cc: '\e[0m'
+
+tasks:
+  default:
+    desc: Validate, test, and build the Go application
+    summary: |-
+      Clean the environment and then run the development and integration tasks
+      for this Lambda Function, by testing and checking those code and files,
+      but only once, not continuously.
+
+      Use the following command for additional information on the steps involved:
+
+      $ task --summary {{ .TASK | replace "default" "build" }}
+    silent: true
+    cmds:
+      - task: clean
+      - task: build
+
+  healthcheck:
+    desc: Check that the GoReleaser environment is valid
+    summary: |-
+      Run checks on both the local development or build environment to ensure
+      that everything required is present, and also run a check on the
+      GoReleaser configuration itself to ensure that it is valid.
+    run: once
+    internal: true
+    silent: true
+    sources:
+      - .goreleaser.yaml
+    cmds:
+      - cmd: goreleaser healthcheck
+      - cmd: goreleaser check
+      - cmd: echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  dirs:
+    desc: Create the required directories for building/testing
+    summary: |-
+      Create any required directories needed as part of building and/or testing
+      of the Lambda function, both locally, and within the integration pipeline.
+    run: once
+    internal: true
+    silent: true
+    cmds:
+      - cmd: mkdir -p bin dist coverage/{unit,integration}
+      - cmd: echo -e '{{ .cg }}Completed{{ .cc }}'
+    status:
+      - test -d bin
+      - test -d dist
+      - test -d coverage/unit
+      - test -d coverage/integration
+
+  modules:
+    desc: Prepare the Go modules
+    summary: |-
+      Ensure that the local copies of any defined modules are kept up-to-date
+      with those configured in this Go application.
+    silent: true
+    sources:
+      - go.mod
+      - go.sum
+    cmds:
+      - cmd: go mod download
+      - cmd: go mod tidy
+      - cmd: echo -e '{{ .cg }}Completed{{ .cc }}'
+
+  build:
+    desc: Locally build the application binary
+    summary: |-
+      Locally build the application binary for the testing and local development
+      of the Lambda function with a temporary version number based on the local
+      commit and file contents.
+    silent: true
+    sources:
+      - 'go.mod'
+      - 'go.sum'
+      - 'main.go'
+      - '**/*.go'
+      - '.goreleaser.yaml'
+    deps:
+      - task: healthcheck
+      - task: dirs
+      - task: modules
+      - task: lint
+      - task: test
+    cmds:
+      - cmd: |-
+          goreleaser build --clean --timeout 2m \
+            --snapshot --single-target --output bin/{{ .bin }}
+      - cmd: echo -e '{{ .cg }}Completed{{ .cc }}'
+
+  fmt:
+    desc: Properly format all the .go files
+    summary: |-
+      Properly fomrmat all of the .go files using go (this is a write-based
+      action which will make changes to all .go files, if required).
+    silent: true
+    sources:
+      - 'main.go'
+      - '**/*.go'
+    cmds:
+      - cmd: go fmt ./...
+      - cmd: echo -e '{{ .cg }}Completed{{ .cc }}'
+
+  lint:
+    desc: Check linting via golangci-lint
+    summary: |-
+      Run extensive linting tests and checks on the Go application using
+      golangci-lint, including the following components:
+
+      - goimports         - Set local prefixes in import paths separately from
+                            third-party packages.
+      - gci               - Check Go package import order and make sure it is
+                            always deterministic.
+      - gofumpt           - A stricter formatter than gofmt.
+      - staticcheck       - Finds bugs & performance issues, enforces style rules.
+      - stylecheck        - Go static analysis tool to enforce style rules in Go.
+      - typecheck         - Go static analysis tool to parse and type-check Go.
+      - varnamelen        - Checks that the length of a variable's name matches
+                            its scope within a function.
+      - maintidx          - Check the maintainability of Go source code.
+      - errorlint         - Check Go source code that will cause problems with
+                            the error wrapping scheme introduced in Go 1.13.
+      - musttag           - Checks that exported fields of a struct are
+                            annotated with the relevant tag.
+      - errchkjson        - Check types passed to the JSON encoding functions
+                            for unsupported types, etc..
+      - errcheck          - Check for ignored error responses.
+      - errname           - Check that sentinel errors are prefixed with the Err
+                            and error types are suffixed with the Error.
+      - bodyclose         - Check that .Close() is called for net/http.Response.
+      - exhaustive        - Check the exhaustiveness of enum switch statements.
+      - exportloopref     - Check for any pointers exported from a loop.
+      - funlen            - Check for long functions (i.e. lines or statements).
+      - goconst           - Check for repeated strings in Go code and suggest
+                            the use of constants instead.
+      - gocritic          - Another Go linting tool.
+      - gocyclo           - Check the cyclomatic complexitiy of functions in Go.
+      - mnd               - A vet analyzer to detect magic numbers in Go.
+      - goprintffuncname  - A check that Printf-like functions end with an f in
+                            their name.
+      - gosec             - A security checker for Go source code.
+      - dogsled           - Check for assignments with too many blank
+                            identifiers.
+      - gosimple          - A linter for Go specialises on simplifying code.
+      - govet             - Examine Go and report suspicious constructs.
+      - ineffassign       - Detect ineffectual assignments in Go .
+      - forbidigo         - Forbids certain types of identifiers.
+      - misspell          - Correct commonly misspelled English words in Go.
+      - noctx             - Detect sending http request without context.Context
+      - contextcheck      - Check whether the function uses a non-inherited
+                            context.
+      - nolintlint        - Go static analysis tool to find poor //nolint
+                            directives, or unusued //nolint directives.
+      - unconvert         - Check for unnecessary type conversions in Go.
+      - unparam           - Go static analysis tool to check for unused function
+                            parameters.
+      - unused            - Check Go for unused constants, variables, functions,
+                            and types.
+      - whitespace        - Check for unnecessary newlines at the start and end
+                            of functions, if, for, etc..
+      - wsl               - A whitespace linter to try and insert more
+                            whitespace in Go.
+      - decorder          - Check declaration order and count of types,
+                            constants, variables and functions.
+      - durationcheck     - Check for two durations multiplied together.
+      - godox             - Check for detection of TODO and other keywords.
+      - makezero          - Check for slice declarations with are set with
+                            a non-zero initial length.
+      - nilnil            - Check for no simultaneous return of nil error and an
+                            invalid value.
+      - nosprintfhostport - Check for misuse of Sprintf to construct a host with
+                            port in a URL.
+      - rowserrcheck      - Check whether err of rows is checked successfully.
+    silent: true
+    sources:
+      - 'main.go'
+      - '**/*.go'
+      - '.golangci.yaml'
+    deps:
+      - task: fmt
+    cmds:
+      - cmd: golangci-lint --config '{{ .root }}/.golangci.yaml' run
+      - cmd: echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  test:
+    desc: Run the unit tests for the application
+    silent: true
+    sources:
+      - 'main.go'
+      - '**/*.go'
+      - '**/testdata/*'
+    deps:
+      - task: dirs
+      - task: lint
+    cmds:
+      - cmd: |-
+          go test -v ./... \
+            -covermode=count \
+            -coverprofile=coverage.out
+      - cmd: |-
+          go tool cover \
+            -func=coverage.out
+      - cmd: |-
+          go tool cover \
+            -html=coverage.out \
+            -o=coverage.html
+      - cmd: echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  trivy:
+    desc: Run Trivy static code analysis
+    summary: |-
+      Run the Trivy application against the codebase looking for dependency
+      issues and vunlerabilitys in the code.
+    silent: true
+    sources:
+      - '{{ .root }}/.trivyignore'
+      - 'go.mod'
+      - 'go.sum'
+      - 'main.go'
+      - '**/*.go'
+    cmds:
+      - cmd: |-
+          trivy fs . \
+            --quiet \
+            --scanners license \
+            --cache-dir '{{ .root }}/.trivy' \
+            --ignored-licenses MPL-2.0 \
+            --severity MEDIUM,HIGH,CRITICAL \
+            --format table \
+            --exit-code 1
+      - cmd: |-
+          trivy fs . \
+            --quiet \
+            --scanners vuln,secret \
+            --severity MEDIUM,HIGH,CRITICAL \
+            --cache-dir '{{ .root }}/.trivy' \
+            --ignorefile '{{ .root }}/.trivyignore' \
+            --format table \
+            --exit-code 1
+      - cmd: echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  codeql:database:
+    desc: Build the CodeQL database for analysis
+    run: once
+    internal: true
+    silent: true
+    sources:
+      - 'bin/{{ .bin }}'
+    env:
+      CODEQL_EXTRACTOR_GO_BUILD_TRACING: on
+    cmds:
+      - cmd: |-
+          codeql database create .codeql \
+            --language=go \
+            --threads=0 --ram=4096 \
+            --overwrite \
+          | grep -vP '([Ee]xtracting|Skipping)'
+      - cmd: |-
+          codeql database finalize .codeql \
+            --threads=0 --ram=4096 \
+            --cleanup-upgrade-backups \
+          || true
+
+  codeql:
+    desc: Run CodeQL static code analysis
+    summary: |-
+      Run the CodeQL application against the codebase looking for configuration
+      issues and vunlerabilitys in both the code and any dependencies upstream.
+    silent: true
+    deps:
+      - task: codeql:database
+      - task: build
+    sources:
+      - 'go.mod'
+      - 'go.sum'
+      - 'main.go'
+      - '**/*.go'
+    cmds:
+      - cmd: |-
+          codeql database analyze \
+            --quiet \
+            --threads=-2 \
+            --format=sarif-latest \
+            --output codeql.sarif \
+            --sarif-add-file-contents \
+            --no-print-metrics-summary \
+            -- .codeql codeql/go-queries
+      - cmd: echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  run:
+    desc: Run the dashboard service
+    summary: |
+      Run the dashboard service locally as a web server to accept requests for
+      local testing and debugging.
+    silent: true
+    env:
+      DEBUG: true
+    cmds:
+      - cmd: |-
+          bin/{{ .bin }} serve \
+            --host localhost
+
+  clean:
+    desc: Clean temporary directories and files from this function
+    summary: |-
+      Clean any temporary directories and files created by, or for, this Lambda
+      function, as well as this Taskfile, and the tools and applications called
+      from it.
+
+      - Remove any previously created executables used for testing;
+      - Remove any previously created build files and archives;
+      - Remove all cache files for Task to ensure that all files are
+        re-evaluated by Task and all tasks are re-run from scratch.
+    run: once
+    silent: true
+    cmds:
+      - cmd: rm -rf dist
+      - cmd: rm -f bin/{{ .bin }}
+      - cmd: rm -rf coverage/*/*
+      - cmd: rm -f coverage.out coverage.html
+      - cmd: rm -rf .codeql
+      - cmd: rm -f codeql.sarif
+      - cmd: echo -e '{{ .cg }}Completed{{ .cc }}'

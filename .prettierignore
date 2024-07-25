@@ -1,0 +1,18 @@
+# Ignore Taskfile and Trivy processing directories
+.task/*
+.trivy/*
+
+# Ignore the Prettier cache file
+.prettiercache
+
+# Ignore the Pull Request template file as this is not a complete document, just
+# a partial document for inclusion by GitHub
+.github/PULL_REQUEST_TEMPLATE.md
+
+# This is a purposeful invalid YAML file for testing
+internal/config/testdata/invalid.yaml
+
+# Ignore mkdocs processing directories
+pages/public/*
+pages/site/*
+pages/.cache/*

@@ -1,0 +1,54 @@
+---
+version: 3
+
+vars:
+  # ANSI Colours
+  cg: '\e[0;32m'
+  cc: '\e[0m'
+
+tasks:
+  default:
+    label: prettier
+    prefix: prettier
+    internal: true
+    silent: true
+    sources:
+      - '*.md'
+      - '*.yaml'
+      - '.*.yaml'
+      - '.*/**.md'
+      - '.*/**.yaml'
+      - '{{ .root }}/.prettier.yaml'
+      - '{{ .root }}/.prettierignore'
+      - '{{ .root }}/.gitignore'
+      # This file is not a complete Markdown document, but a partial template
+      # which is used when creating pull requests within GitHub, so ignore it
+      - exclude: .github/PULL_REQUEST_TEMPLATE.md
+      # Ignore the Terraform configuration and any modules (if available) as
+      # these have a dedicated task to run prettier for it's own local files
+      - exclude: terraform/**
+      - exclude: modules/**
+    vars:
+      files:
+        sh: |-
+          find . \
+               -ignore_readdir_race \
+               -type f \
+               -not \
+            \(     -path './pages/*' \
+               -or -path './.trivy/*' \
+            \) -and \
+            \(           -iname '*.yaml' \
+               -or       -iname '*.json' \
+               -or       -iname '*.md' \
+            \)   -printf '%P ' \
+          2> /dev/null || echo 'README.md'
+    cmds:
+      # There is no need to test if .files is empty as it guaranteed to list at
+      # least the one file, being the README.md in the root of the repository
+      - cmd: |-
+          prettier --log-level log \
+            --write --config .prettier.yaml \
+            --cache --cache-location .prettiercache \
+            {{ .files }}
+          echo -e '{{ .cg }}Passed{{ .cc }}'

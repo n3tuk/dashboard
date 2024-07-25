@@ -1,0 +1,169 @@
+---
+version: 3
+
+vars:
+  # ANSI Colours
+  cr: '\e[1;31m'
+  cg: '\e[0;32m'
+  cw: '\e[1;37m'
+  cc: '\e[0m'
+
+tasks:
+  lint:
+    desc: Lint all documentation for GitHub Pages
+    summary: |-
+      Run linting checks across this Terraform configuration to find any
+      potential issues within the repository by running the following steps:
+
+      - Parse selected JSON, YAML, CSS, and Markdown files through Prettier in
+        order to ensure they are syntactically correct, and that they are
+        consistent in their layout and usage; and
+      - Review the format of selected Markdown files to ensure they are clean
+        and minimise the ability for the page to be incorrectly rendered, such
+        as de-duplicating headers, consistent text width, formatted list items,
+        and code layouts.
+    silent: true
+    cmds:
+      - task: prettier
+      - task: markdownlint
+
+  prettier:
+    internal: true
+    silent: true
+    sources:
+      - 'mkdocs.yaml'
+      - 'docs/**.md'
+      - 'docs/assets/**.yaml'
+      - 'docs/assets/**.json'
+      - 'docs/assets/**.css'
+      - '{{ .root }}/.prettier.yaml'
+      - '{{ .root }}/.prettierignore'
+      - '{{ .root }}/.gitignore'
+    vars:
+      files:
+        sh: |-
+          find . \
+               -ignore_readdir_race \
+               -type f \
+            \( -iname '*.md' \
+               -or -iwholename './mkdocs.yaml' \
+               -or -iwholename './docs/assets/*.json' \
+               -or -iwholename './docs/assets/*.yaml' \
+               -or -iwholename './docs/assets/*.css' \
+            \) -printf '%P ' \
+          2> /dev/null || true
+    cmds:
+      - cmd: |-
+          [[ -n '{{ .files }}' ]] || exit 0
+          prettier --log-level log \
+            --write --config '{{ .root }}/.prettier.yaml' \
+            --cache --cache-location .prettiercache \
+            {{ .files }}
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  markdownlint:
+    internal: true
+    silent: true
+    sources:
+      - 'docs/**.md'
+      - '.markdownlint.yaml'
+      - '.markdownignore'
+    vars:
+      files:
+        sh: |-
+          find docs/ \
+            -ignore_readdir_race \
+            -type f \
+            -iname '*.md' \
+            -printf 'docs/%P ' \
+          2> /dev/null || true
+    cmds:
+      - cmd: |-
+          [[ -n '{{ .files }}' ]] || exit 0
+          markdownlint \
+            --config .markdownlint.yaml \
+            --ignore-path .markdownignore \
+            {{ .files }}
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  serve:
+    desc: Run mkdocs to serve the pages during development
+    summary: |-
+      Run the mkdocs application in serve mode to render and serve the website
+      during development.
+    silent: true
+    sources:
+      # Only restart the service if the configuration file is changed, as the
+      # service will automatically handle the re-generation of documentation on
+      # changes to the underlying markdown files and assets
+      - 'mkdocs.yaml'
+    cmds:
+      - cmd: |-
+          mkdocs serve --config-file mkdocs.yaml --dev-addr '172.27.4.188:8080'
+
+  dirs:
+    internal: true
+    silent: true
+    cmds:
+      - cmd: |-
+          mkdir -p dist
+          mkdir -p public
+    status:
+      - test -d dist
+      - test -d public
+
+  build:
+    desc: Build the GitHub Pages website
+    summary: |-
+      Build, using the current configuration and all documentation and assets,
+      the current version of the documentation into a final rendered, static
+      website which can be uploaded into GitHub Pages.
+    silent: true
+    sources:
+      - 'mkdocs.yaml'
+      - 'docs/**'
+    deps:
+      - task: dirs
+    cmds:
+      - cmd: |-
+          mkdocs --version
+      - cmd: |-
+          mkdocs build \
+            --verbose \
+            --config-file mkdocs.yaml \
+            --clean --strict \
+            --site-dir public
+          echo -e '{{ .cg }}Completed{{ .cc }}'
+
+  archive:
+    desc: Prepare the archive for GitHub Pages
+    summary: |-
+      Prepare the archive for the GitHub Pages website upload.
+    silent: true
+    sources:
+      - 'public/**'
+    deps:
+      - task: dirs
+    cmds:
+      - cmd: |-
+          tar \
+            --verbose \
+            --create --file dist/artifact.tar \
+            --dereference --hard-dereference \
+            --directory public .
+          echo -e '{{ .cg }}Completed{{ .cc }}'
+
+  clean:
+    desc: Clean temporary directories and files from this documentation
+    summary: |
+      Clean any temporary directories and files created by both this Taskfile,
+      and the tools and applications called from it.
+
+      - Remove any previously built versions of the documentation.
+    silent: true
+    run: once
+    cmds:
+      - cmd: |-
+          rm -rf dist
+          rm -rf public
+          echo -e '{{ .cg }}Completed{{ .cc }}'

@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://github.com/n3tuk/dashboard/blob/main/schemas/serve.json",
+  "title": "dashboard serve Configuration File",
+  "description": "The configuration file for the dashboard application when running as a web service",
+  "$defs": {
+    "web": {
+      "title": "Web Servie Configuration",
+      "description": "The configuration for the web service",
+      "type": "object",
+      "properties": {
+        "bind": {
+          "$ref": "#/$defs/bind"
+        }
+      }
+    },
+    "bind": {
+      "title": "The Web Serve Configuration",
+      "description": "The configuration for binding the web service on startup",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "address": {
+          "$ref": "#/$defs/address"
+        },
+        "port": {
+          "$ref": "#/$defs/port"
+        }
+      }
+    },
+    "address": {
+      "title": "Service Address",
+      "description": "The hostname of IPv4/IPv6 address to bind the service to on startup",
+      "examples": ["localhost", "127.0.0.1", "::1"],
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "hostname"
+        },
+        {
+          "type": "string",
+          "format": "ipv4"
+        },
+        {
+          "type": "string",
+          "format": "ipv6"
+        }
+      ]
+    },
+    "port": {
+      "title": "Service Port Number",
+      "description": "The TCP port number to bind the service to on startup",
+      "type": "number",
+      "minimum": 1025,
+      "maximum": 65535
+    },
+    "logging": {
+      "title": "Logging Configuration",
+      "description": "Configure the logging output from the dashboard send command",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/logging-level"
+        },
+        "json": {
+          "$ref": "#/$defs/logging-json"
+        }
+      }
+    },
+    "logging-level": {
+      "description": "Set whether or not to use JSON-based structured logging",
+      "type": "string",
+      "enum": ["debug", "info", "warning", "error"]
+    },
+    "logging-json": {
+      "description": "Set whether or not to use JSON-based structured logging",
+      "type": "boolean"
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "web": {
+      "$ref": "#/$defs/web"
+    },
+    "logging": {
+      "$ref": "#/$defs/logging"
+    }
+  }
+}

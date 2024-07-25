@@ -1,0 +1,6 @@
+---
+endpoint-uri: http://localhost:8080
+api-key: d54813f8-9a23-470b-be06-d35b150f9fc1 # gitleaks:allow
+
+logging:
+  json: false

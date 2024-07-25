@@ -1,0 +1,17 @@
+[data-md-color-scheme='slate'] {
+  --md-hue: 225;
+}
+
+.md-typeset .thin {
+  grid-gap: 0.4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  margin: 1em 0;
+}
+
+.md-typeset .wide {
+  grid-gap: 0.4rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 36rem), 1fr));
+  margin: 1em 0;
+}
