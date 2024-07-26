@@ -1,0 +1,45 @@
+---
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+change-title-escapes: '\<*_&@'
+categories:
+  - title: 'Breaking Changes'
+    labels:
+      - 'release/breaking'
+  - title: 'Features'
+    labels:
+      - 'release/feature'
+  - title: 'Updates'
+    labels:
+      - 'release/update'
+  - title: 'Bug Fixes'
+    labels:
+      - 'release/fix'
+  - title: 'Maintenance'
+    collapse-after: 3
+    labels:
+      - 'release/chore'
+exclude-labels:
+  - 'release/skip'
+version-resolver:
+  major:
+    labels:
+      - 'release/breaking'
+  minor:
+    labels:
+      - 'release/feature'
+  patch:
+    labels:
+      - 'release/update'
+      - 'release/chore'
+      - 'release/fix'
+  default: patch
+template: |
+  # `$REPOSITORY` v$RESOLVED_VERSION
+
+  The following is the list of the fixes, updates, and new features, against `$REPOSITORY` since [$PREVIOUS_TAG](https://github.com/$OWNER/$REPOSITORY/releases/tag/$PREVIOUS_TAG) (see [v$RESOLVED_VERSION changes after $PREVIOUS_TAG](https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION) for the detailed changelog).
+
+  $CHANGES
+change-template: '- $TITLE ([#$NUMBER]($URL), @$AUTHOR)'
+no-changes-template: |-
+  No changes are in this release.
