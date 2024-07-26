@@ -1,0 +1,51 @@
+---
+version: 2
+
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: daily
+      time: '18:30'
+      timezone: 'Europe/London'
+    commit-message:
+      prefix: go
+      include: scope
+    labels:
+      - type/dependencies
+      - update/go
+      - release/chore
+    reviewers:
+      - jonathanio
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: daily
+      time: '18:30'
+      timezone: 'Europe/London'
+    commit-message:
+      prefix: python
+      include: scope
+    labels:
+      - type/dependencies
+      - update/python
+      - release/chore
+    reviewers:
+      - jonathanio
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+      time: '18:30'
+      timezone: 'Europe/London'
+    commit-message:
+      prefix: python
+      include: scope
+    labels:
+      - type/dependencies
+      - update/actions
+      - release/chore
+    reviewers:
+      - jonathanio
