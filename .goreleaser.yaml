@@ -32,9 +32,9 @@ builds:
       -X 'main.BuildDate={{ .Date }}'
       -X 'main.Architecture={{ .Runtime.Goarch }}'
     asmflags: >-
-      all=-trimpath={{ .Env.GOPATH }}
+      all=-trimpath=.
     gcflags: >-
-      all=-trimpath={{ .Env.GOPATH }}
+      all=-trimpath=.
     goos:
       - 'linux'
     goarch:

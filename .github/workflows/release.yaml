@@ -1,0 +1,53 @@
+---
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+  issues: write
+
+defaults:
+  run:
+    # Error handling and pipefile must be explicitly set via the default shell
+    #   https://github.com/actions/runner/issues/353#issuecomment-1067227665
+    shell: bash --noprofile --norc -eo pipefail {0}
+
+jobs:
+  goreleaser:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          # Setting fetch-depth to 0 here should fetch all of the history and
+          # all of the tags for the current branch and tag being released
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run GoReleaser
+        id: releaser
+        uses: goreleaser/goreleaser-action@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean

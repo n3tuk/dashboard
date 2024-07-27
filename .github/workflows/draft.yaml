@@ -1,0 +1,67 @@
+---
+name: Draft
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release-draft:
+    name: Draft the Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Draft the release
+        id: drafter
+        uses: release-drafter/release-drafter@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-name: release-drafter.yaml
+          disable-autolabeler: true
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+          cache: true
+
+      - name: Verify the Go modules
+        run: go mod verify
+
+      - name: Download the Go modules
+        run: go mod download
+
+      - name: Run coverage tests
+        run: |-
+          go test -v ./... \
+            -covermode=count \
+            -coverprofile=coverage.out
+
+      - name: Show coverage report summary
+        run: |-
+          go tool cover \
+            -func=coverage.out
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.out
+          flags: unit-tests
+          name: go-cover
