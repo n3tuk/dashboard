@@ -7,21 +7,22 @@ release:
     owner: n3tuk
     name: dashboard
   name_template: |-
-    {{ .Tag }}
+    {{ .Version }}
 changelog:
   disable: true
 snapshot:
   name_template: >-
-    {{ incpatch .Version }}~dev{{ .Now.Format "-20060102-1504" }}
+    {{ incpatch .Version }}~d{{ .Now.Format "0601021504" }}
 checksum:
   name_template: |-
-    {{ .ProjectName }}-sha512
+    dashboard-sha512
   algorithm: sha3-512
 
 builds:
   - id: dashboard
     main: main.go
     binary: dashboard
+    mod_timestamp: '{{ .CommitTimestamp }}'
     env:
       - CGO_ENABLED=0
     ldflags: >-
@@ -37,6 +38,8 @@ builds:
       all=-trimpath=.
     goos:
       - 'linux'
+      - 'darwin'
+      - 'windows'
     goarch:
       - 'arm64'
       - 'amd64'
@@ -44,12 +47,15 @@ builds:
       - '7'
     goamd64:
       - 'v3'
+    ignore:
+      - goos: darwin
+        goarch: amd64
 
 archives:
-  - id: dashboard-archive
+  - id: archive
     name_template: |-
-      {{ .ProjectName }}-{{ .Version }}-{{ tolower .Os }}-{{ tolower .Arch }}
-    format: tar.gz
+      {{ .ProjectName }}-v{{ .Version }}-{{ tolower .Os }}-{{ tolower .Arch }}
+    format: zip
     builds_info:
       group: root
       owner: root
@@ -58,50 +64,63 @@ archives:
     files:
       - LICENSE
 
-# Create images for both amd64 and arm64 to give it the widest possible support
 dockers:
-  - id: '{{ .ProjectName }}-amd64'
+  - id: amd64
     goarch: amd64
+    goamd64: v3
     image_templates:
-      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-amd64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-amd64
     dockerfile: Dockerfile
     use: docker
+    skip_push: false
     build_flag_templates:
       - --platform=linux/amd64
-      - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
 
-  - id: '{{ .ProjectName }}-arm64'
+  - id: arm64
     goarch: arm64
+    goarm: 7
     image_templates:
-      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-arm64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-arm64
     dockerfile: Dockerfile
     use: docker
+    skip_push: false
     build_flag_templates:
       - --platform=linux/arm64
-      - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.created={{ .Date }}
+      - --label=org.opencontainers.image.version={{ .Version }}
       - --label=org.opencontainers.image.revision={{ .FullCommit }}
 
 # Build a set of manifests based on all the ways the GitHub Action could be
 # called, including as the main branch, both short and long commit IDs, and each of
 # Major, Major/Minor, and Major/Minor/Patch versions being tagged
 docker_manifests:
-  - name_template: ghcr.io/n3tuk/{{ .ProjectName }}:latest
+  - name_template: ghcr.io/n3tuk/dashboard:latest
     use: docker
+    skip_push: auto
     image_templates:
-      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-amd64
-      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-arm64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-amd64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-arm64
 
-  - name_template: ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}
+  - name_template: ghcr.io/n3tuk/dashboard:v{{ .Major }}
     use: docker
+    skip_push: auto
     image_templates:
-      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-amd64
-      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-arm64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-amd64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-arm64
 
-  - name_template: ghcr.io/n3tuk/{{ .ProjectName }}:{{ .ShortCommit }}
+  - name_template: ghcr.io/n3tuk/dashboard:v{{ .Version }}
     use: docker
+    skip_push: auto
     image_templates:
-      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-amd64
-      - ghcr.io/n3tuk/{{ .ProjectName }}:{{ .Version }}-arm64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-amd64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-arm64
+
+  - name_template: ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}
+    use: docker
+    skip_push: false
+    image_templates:
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-amd64
+      - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-arm64

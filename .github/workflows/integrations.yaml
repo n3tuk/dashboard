@@ -142,13 +142,13 @@ jobs:
           distribution: goreleaser
           version: '~> v2'
           args: >-
-            build
+            release
             --clean
-            --timeout 5m
+            --skip publish
             --snapshot
-            --single-target
+            --timeout 5m
 
-      - name: Upload Build
+      - name: Upload linux_amd64_v3
         uses: actions/upload-artifact@v4
         with:
           name: dashboard_linux_amd64_v3
@@ -156,6 +156,34 @@ jobs:
           # If there are no files found when uploading this artifact, then there
           # was an issue with the build, so fail and fix rather than permit the
           # pull request to continue and merge, potentially breaking the release
+          if-no-files-found: error
+
+      - name: Upload linux_arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard_linux_arm64
+          path: dist/dashboard_linux_arm64/
+          if-no-files-found: error
+
+      - name: Upload darwin_arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard_darwin_arm64
+          path: dist/dashboard_darwin_arm64/
+          if-no-files-found: error
+
+      - name: Upload windows_amd64_v3
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard_windows_amd64_v3
+          path: dist/dashboard_windows_amd64_v3/
+          if-no-files-found: error
+
+      - name: Upload windows_arm64
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard_windows_arm64
+          path: dist/dashboard_windows_arm64/
           if-no-files-found: error
 
       - name: Upload Metadata

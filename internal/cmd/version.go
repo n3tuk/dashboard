@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/MakeNowJust/heredoc/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -70,24 +69,11 @@ func runVersion(cmd *cobra.Command, _ []string) {
 	if err == nil && json {
 		// Rather than go down the rabbit whole of marshalling JSON, just create the
 		// raw strong which can be parsed further down as an alternate output
-		output = heredoc.Doc(`
-		  {
-			  "application":"%s",
-			  "version":"%s",
-			  "arch":"%s",
-			  "build-date":"%s",
-			  "commit":"%s",
-			  "branch":"%s"
-      }
-		`)
+		output = `{"application":"%s","version":"%s","arch":"%s","date":"%s","branch":"%s","commit":"%s"}`
 	} else {
-		output = heredoc.Doc(`
-			%s %s
-		  built for %s on %s
-			commit %s on branch %s
-		`)
+		output = "%s %s (%s)\nbuilt %s\n      (%s/%s)"
 	}
 
 	//nolint:forbidigo // This is a genuine output to the console
-	fmt.Printf(output, Application, Version, Architecture, BuildDate, Commit, Branch)
+	fmt.Printf(output, Application, Version, Architecture, BuildDate, Branch, Commit)
 }
