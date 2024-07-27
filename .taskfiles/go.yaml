@@ -188,6 +188,7 @@ tasks:
       - '.golangci.yaml'
     deps:
       - task: fmt
+      - task: modules
     cmds:
       - cmd: golangci-lint --config '{{ .root }}/.golangci.yaml' run
       - cmd: echo -e '{{ .cg }}Passed{{ .cc }}'
