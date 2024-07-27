@@ -16,13 +16,15 @@ tasks:
       - Taskfiles (Taskfile.yaml, .taskfiles/*.yaml)
       - GitHub Dependabot configuration (.github/dependabot.yaml)
       - GitHub Workflows (.github/workflows/*.yaml)
-      - pre-commit Configuration (.pre-commit-config)
+      - pre-commit Configuration (.pre-commit-config.yaml)
+      - CodeCov Configuration (.codecov.yml)
     silent: true
     cmds:
       - task: taskfiles
       - task: dependabot
       - task: workflows
       - task: pre-commit
+      - task: codecov
       - task: serve
       - task: send
 
@@ -79,6 +81,22 @@ tasks:
             {{ .files }}
           echo -e '{{ .cg }}Passed{{ .cc }}'
 
+  codecov:
+    internal: true
+    silent: true
+    sources:
+      - '.codecov.yml'
+    cmds:
+      # Check that the dependabot.yaml file exists first, and fail cleanly if
+      # that is the case, otherwise check-jsonschema will fail the check
+      - cmd: |-
+          [[ -f .codecov.yml ]] || exit 0
+          check-jsonschema \
+            --output-format text --verbose \
+            --schemafile https://json.schemastore.org/codecov.json \
+            .codecov.yml
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
   pre-commit:
     internal: true
     silent: true
@@ -89,7 +107,7 @@ tasks:
           [[ -f .pre-commit-config.yaml ]] || exit 0
           check-jsonschema \
             --output-format text --no-cache --verbose \
-            --schemafile https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/pre-commit-config.json \
+            --schemafile https://json.schemastore.org/pre-commit-config.json \
             .pre-commit-config.yaml
           echo -e '{{ .cg }}Passed{{ .cc }}'
 
