@@ -17,7 +17,7 @@ func Prepare() {
 	// Configure the bindings for the web service, setting both the address and
 	// port to listen on, and which endpoints should be trusted for processing the
 	// X-Forwarded-For headers received from upstream connections
-	viper.SetDefault("web.bind.hostname", host)
+	viper.SetDefault("web.bind.address", host)
 	viper.SetDefault("web.bind.port", port)
 	viper.SetDefault("web.bind.proxies", []string{"127.0.0.1", "::1"})
 

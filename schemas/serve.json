@@ -8,6 +8,7 @@
       "title": "Web Servie Configuration",
       "description": "The configuration for the web service",
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "bind": {
           "$ref": "#/$defs/bind"

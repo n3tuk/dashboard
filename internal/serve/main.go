@@ -116,7 +116,7 @@ func Logger() gin.HandlerFunc {
 func SetupServer(router *gin.Engine) *http.Server {
 	return &http.Server{
 		Addr: net.JoinHostPort(
-			viper.GetString("web.bind.hostname"),
+			viper.GetString("web.bind.address"),
 			viper.GetString("web.bind.port"),
 		),
 

@@ -1,7 +1,7 @@
 ---
 web:
   bind:
-    address: localhost
+    address: 0.0.0.0
     port: 8080
     proxies:
       - '::1'
