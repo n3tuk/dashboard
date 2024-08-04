@@ -107,6 +107,16 @@ func Logger() gin.HandlerFunc {
 		slog.Default().WithGroup("gin"),
 		slogg.Config{
 			WithRequestID: true,
+			Filters: []slogg.Filter{
+				slogg.IgnoreStatus(
+					http.StatusUnauthorized,
+					http.StatusNotFound,
+				),
+				slogg.IgnorePath(
+					"/alive",
+					"/healthz",
+				),
+			},
 		},
 	)
 }
