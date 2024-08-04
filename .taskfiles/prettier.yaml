@@ -36,6 +36,7 @@ tasks:
                -type f \
                -not \
             \(     -path './pages/*' \
+               -or -oath './charts/*/templates/*' \
                -or -path './.trivy/*' \
             \) -and \
             \(           -iname '*.yaml' \

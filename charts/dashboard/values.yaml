@@ -1,0 +1,202 @@
+---
+# -- Override the name of the objects created by this chart
+nameOverride:
+
+# -- Override the name of the objects created by this chart
+fullnameOverride:
+
+podDisruptionBudget:
+  # -- Set whether or not to create the podDisruptionBudget resource for the
+  # dashboard deployment.
+  create: true
+  # -- The number of pods in a RepicaSet which much be available after an
+  # eviction, either absolute or a percentage. Only one of `minAvailable` or
+  # `maxAvailable` can be configured, with `minAvailable` taking priority.
+  minAvailable: 1
+  # -- The number of pods in a RepicaSet which can be unavailable after an
+  # eviction, either absolute or a percentage.
+  maxUnavilable: 0
+  # -- Set any additional annotations which should be added to the
+  # PodDisruptionBudget resource
+  annotations: {}
+  # -- Set any additional labels which should be added to the
+  # PodDisruptionBudget resource
+  labels: {}
+
+service:
+  # -- Set whether the Service should be a ClusterIP or NodeIP
+  type: ClusterIP
+  # -- Set the TCP port the Service should be configured to listen on
+  port: 8080
+  # -- Set any additional annotations which should be added to the Ingress
+  # resource
+  annotations: {}
+  # -- Set any additional labels which should be added to the Ingress resource
+  labels: {}
+
+ingress:
+  # -- Set whether or not to create the Ingress for the dashboard Service.
+  create: false
+  # -- (string) Set the class name of the controller which will handle the
+  # Ingress
+  className:
+  # -- Set any additional annotations which should be added to the Ingress
+  # resource
+  annotations: {}
+  # -- Set any additional labels which should be added to the Ingress resource
+  labels: {}
+
+  # -- Set the hostname and path mappings for this service on the Ingress
+  hosts: []
+  # - host: dashboard.local
+  #   paths:
+  #     - path: /
+  #       pathType: ImplementationSpecific
+
+  # -- Set the TLS secret and hostnames for this service on the Ingress
+  tls: []
+  #  - secretName: dashboard-tls
+  #    hosts:
+  #      - dashboard.local
+
+serviceAccount:
+  # -- Set whether or not to create a ServiceAccount resource for the dashboard
+  # service.
+  create: false
+  # -- (string) Override the name of the ServiceAccount
+  # @default `.Chart.Name`
+  name:
+  # -- Set any additional annotations which should be added to the
+  # ServiceAccount resource
+  annotations: {}
+  # -- Set any additional labels which should be added to the ServiceAccount
+  # resource
+  labels: {}
+
+networkPolicy:
+  # -- Set whether or not to create a NetworkPolicy resource for the dashboard
+  # service.
+  create: false
+  # -- Set any additional annotations which should be added to the NetworkPolicy
+  # resource
+  annotations: {}
+  # -- Set any additional labels which should be added to the NetworkPolicy
+  # resource
+  labels: {}
+
+deployment:
+  # -- Set the number of replicas of this deployment which should be deployed
+  # onto the kubernetes cluster
+  replicaCount: 1
+  # -- Set the number of deployments which should be kept to enable a rollback
+  # of the deployment in the event of any issues or failures
+  revisionHistoryLimit: 10
+  # -- Set any additional annotations which should be added to the Deployment
+  # resource
+  annotations: {}
+  # -- Set any additional labels which should be added to the Deployment
+  # resource
+  labels: {}
+
+pod:
+  image:
+    # -- Set the URI for the container image to be deployed for the dashboard
+    # Deployment
+    repository: ghcr.io/n3tuk/dashboard
+    # -- Set the pull policy for the host running each Pod of the deployment
+    pullPolicy: IfNotPresent
+    # tag: ''
+
+  # -- Set any additional annotations which should be added to the Ingress
+  # resource
+  annotations: {}
+  # -- Set any additional labels which should be added to the Ingress resource
+  labels: {}
+
+  # -- Set any node labels which should be used for assigning Pods to Nodes
+  nodeSelector: {}
+  # -- Set the list of node taints to tolerate for deployment, if required
+  tolerations: []
+  # -- Set the Node/Pod affinities used to schedule and distribute the deployed
+  # Pods
+  affinity: {}
+  # -- Set the constraints which should be applied to help schedule and run the
+  # Pods across the cluster
+  topologySpreadConstraints: []
+
+  # -- Set the resources which should be requested and limited to when the Pod
+  # is run on each host
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  # -- Set addtional command-line arguments to pass to the dashboard application
+  # at runtime
+  extraArgs: []
+
+  logging:
+    # -- Set the logging level for the dashboard application, selecting from
+    # debug, info, warning, and error
+    level: info
+    # -- Set whether or not to output the structured logs in JSON forward, or in
+    # plain text format
+    json: true
+
+  probes:
+    startup:
+      # -- Set whether or not to add the Startup Probe to the Pod
+      create: true
+      # -- Set how often (in seconds) to trigger the probe
+      periodSeconds: 2
+      # -- Number of seconds after the container has started before the probe is
+      # initiated
+      initialDelaySeconds: 0
+      # -- Number of seconds after which the probe times out
+      timeoutSeconds: 1
+      # -- Minimum consecutive successes for the probe to be considered
+      # successful after having failed
+      successThreshold: 1
+      # -- Number of times in a row the probe should fail before  Kubernetes
+      # considers that the overall check has failed
+      failureThreshold: 30
+    liveness:
+      # -- Set whether or not to add the Liveness Probe to the Pod
+      create: true
+      # -- Set how often (in seconds) to trigger the probe
+      periodSeconds: 5
+      # -- Number of seconds after the container has started before the probe is
+      # initiated
+      initialDelaySeconds: 0
+      # -- Number of seconds after which the probe times out
+      timeoutSeconds: 3
+      # -- Minimum consecutive successes for the probe to be considered
+      # successful after having failed
+      successThreshold: 1
+      # -- Number of times in a row the probe should fail before  Kubernetes
+      # considers that the overall check has failed
+      failureThreshold: 2
+    readiness:
+      # -- Set whether or not to add the Readiness Probe to the Pod
+      create: true
+      # -- Set how often (in seconds) to trigger the probe
+      periodSeconds: 15
+      # -- Number of seconds after the container has started before the probe is
+      # initiated
+      initialDelaySeconds: 0
+      # -- Number of seconds after which the probe times out
+      timeoutSeconds: 5
+      # -- Minimum consecutive successes for the probe to be considered
+      # successful after having failed
+      successThreshold: 1
+      # -- Number of times in a row the probe should fail before  Kubernetes
+      # considers that the overall check has failed
+      failureThreshold: 1
+
+serviceMonitor:
+  # -- Set whether or not to create a ServiceMonitor resource for the dashboard
+  # service.
+  create: false
+  # -- Set the number of seconds Prometheus should monitor the metrics for on
+  # this service
+  interval: 15s

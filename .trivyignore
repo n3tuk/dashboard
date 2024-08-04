@@ -1,0 +1,8 @@
+# Memory limits are values which should be set by the end-user of the
+# application rather than set as defaults in the Helm Cart
+KSV011
+KSV018
+
+# Allow capabilities to be added to a container's configuration so that
+# NET_BIND_SERVICE can passed and allow the container to bind as a service
+KSV022

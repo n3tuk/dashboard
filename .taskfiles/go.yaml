@@ -15,8 +15,8 @@ tasks:
     desc: Validate, test, and build the Go application
     summary: |-
       Clean the environment and then run the development and integration tasks
-      for this Lambda Function, by testing and checking those code and files,
-      but only once, not continuously.
+      for this Go application, by testing and checking those code and files, but
+      only once, not continuously.
 
       Use the following command for additional information on the steps involved:
 
@@ -46,7 +46,7 @@ tasks:
     desc: Create the required directories for building/testing
     summary: |-
       Create any required directories needed as part of building and/or testing
-      of the Lambda function, both locally, and within the integration pipeline.
+      of the Go application, both locally, and within the integration pipeline.
     run: once
     internal: true
     silent: true
@@ -77,7 +77,7 @@ tasks:
     desc: Locally build the application binary
     summary: |-
       Locally build the application binary for the testing and local development
-      of the Lambda function with a temporary version number based on the local
+      of the Go application with a temporary version number based on the local
       commit and file contents.
     silent: true
     sources:
@@ -314,9 +314,9 @@ tasks:
   clean:
     desc: Clean temporary directories and files from this function
     summary: |-
-      Clean any temporary directories and files created by, or for, this Lambda
-      function, as well as this Taskfile, and the tools and applications called
-      from it.
+      Clean any temporary directories and files created by, or for, this Go
+      application, as well as this Taskfile, and the tools and applications
+      called from it.
 
       - Remove any previously created executables used for testing;
       - Remove any previously created build files and archives;

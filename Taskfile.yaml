@@ -55,6 +55,11 @@ includes:
     dir: pages
     vars:
       root: '{{ .root }}'
+  helm:
+    taskfile: '.taskfiles/helm.yaml'
+    dir: charts/dashboard
+    vars:
+      root: '{{ .root }}'
 
 tasks:
   default:
@@ -122,8 +127,11 @@ tasks:
     silent: true
     cmds:
       - task: go:lint
+      - task: helm:lint
+      - task: pages:lint
       - task: jsonschema
       - task: prettier
+      - task: helm:documentation
       - task: markdownlint
 
   test:
@@ -135,14 +143,16 @@ tasks:
       - task: go:test
 
   build:
-    desc: Locally build the application binary
+    desc: Locally build the application binary and Helm Chart
     summary: |-
       Locally build the application binary for the testing and local development
       of the Lambda function with a temporary version number based on the local
-      commit and file contents.
+      commit and file contents, as well as the Helm Chart for deployment.
     silent: true
     cmds:
       - task: go:build
+      - task: helm:build
+      - task: pages:build
 
   security:
     desc: Run security and static code analysis checks against the application
@@ -152,6 +162,7 @@ tasks:
     silent: true
     cmds:
       - task: go:trivy
+      - task: helm:trivy
       - task: go:codeql
 
   run:
@@ -180,6 +191,7 @@ tasks:
     cmds:
       - task: go:clean
       - task: pages:clean
+      - task: helm:clean
       - cmd: rm -f .prettiercache
       - cmd: rm -rf .task
       - cmd: echo -e '{{ .cg }}Completed{{ .cc }}'
