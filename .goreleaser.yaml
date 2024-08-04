@@ -97,28 +97,32 @@ dockers:
 # called, including as the main branch, both short and long commit IDs, and each of
 # Major, Major/Minor, and Major/Minor/Patch versions being tagged
 docker_manifests:
-  - name_template: ghcr.io/n3tuk/dashboard:latest
+  - id: latest
+    name_template: ghcr.io/n3tuk/dashboard:latest
     use: docker
     skip_push: auto
     image_templates:
       - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-amd64
       - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-arm64
 
-  - name_template: ghcr.io/n3tuk/dashboard:v{{ .Major }}
+  - id: major
+    name_template: ghcr.io/n3tuk/dashboard:v{{ .Major }}
     use: docker
     skip_push: auto
     image_templates:
       - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-amd64
       - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-arm64
 
-  - name_template: ghcr.io/n3tuk/dashboard:v{{ .Version }}
+  - id: version
+    name_template: ghcr.io/n3tuk/dashboard:v{{ .Version }}
     use: docker
     skip_push: auto
     image_templates:
       - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-amd64
       - ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}-arm64
 
-  - name_template: ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}
+  - id: commit
+    name_template: ghcr.io/n3tuk/dashboard:{{ .ShortCommit }}
     use: docker
     skip_push: false
     image_templates:

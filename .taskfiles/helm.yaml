@@ -1,0 +1,134 @@
+---
+version: 3
+output: prefixed
+interval: 5s
+
+vars:
+  # ANSI Colours
+  cr: '\e[1;31m'
+  cg: '\e[0;32m'
+  cw: '\e[1;37m'
+  cc: '\e[0m'
+
+tasks:
+  default:
+    desc: Validate, test, and build the Helm Charts
+    summary: |-
+      Clean the environment and then run the development and integration tasks
+      for this Helm Chart, by testing and checking those code and files, but
+      only once, not continuously.
+
+      Use the following command for additional information on the steps involved:
+
+      $ task --summary {{ .TASK | replace "default" "build" }}
+    silent: true
+    cmds:
+      - task: lint
+
+  lint:
+    desc: Check linting via helm
+    silent: true
+    sources:
+      - '**.yaml'
+    cmds:
+      - cmd: helm lint .
+      - cmd: echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  trivy:
+    internal: true
+    silent: true
+    sources:
+      - '{{ .root }}/.trivyignore'
+      - 'Chart.yaml'
+      - 'values.yaml'
+      - 'requirements.yaml'
+      - 'templates/*.yaml'
+    cmds:
+      - cmd: |-
+          trivy \
+              --quiet \
+            config \
+              --cache-dir '{{ .root }}/.trivy' \
+              --ignorefile '{{ .root }}/.trivyignore' \
+              --format table \
+              --exit-code 1 \
+              {{ .options }} . \
+            2> >(grep -v INFO)
+          echo -e '{{ .cg }}Passed{{ .cc }}'
+
+  build:
+    desc: Build (package) the Helm Chart
+    summary: |-
+      Build the Helm Chart using the current templates and configuration.
+    silent: true
+    sources:
+      - 'Chart.yaml'
+      - 'values.yaml'
+      - 'requirements.yaml'
+      - 'templates/*.yaml'
+    vars:
+      rc:
+        sh: |-
+          git describe --tags --long \
+          | cut -d - -f 2
+      tag:
+        sh: |-
+          git describe --tags \
+            $(git rev-list --tags --max-count=1) \
+          | tr -d v
+      inc:
+        sh: |-
+          semver -c -i patch {{ .tag }}
+    cmds:
+      - cmd: |-
+          helm package . \
+            --version '{{ .inc }}-rc.{{ .rc }}' \
+            --app-version '{{ .tag }}'
+          echo -e '{{ .cg }}Completed{{ .cc }}'
+
+  documentation:
+    aliases:
+      - docs
+    desc: Update the README.md file with helm-docs
+    summary: |-
+      Update the README.md file with a summary of the Helm configuration and the
+      possible options through the value.yaml file, including information about
+      the requirements and variables.
+
+      This output from helm-docs is designed to overwrite previous versions
+      witin the README.md, and not to the conflict with processing by Prettier
+      (which will otherwise reformat the tables) nor markdownlint (which is
+      configured to ignore certain elements, such some line lengths and HTML
+      entities).
+    silent: true
+    sources:
+      - '.template.md'
+      - 'Chart.yaml'
+      - 'values.yaml'
+    cmds:
+      - cmd: |-
+          # --documentation-strict-mode \
+          helm-docs \
+            --badge-style for-the-badge \
+            --sort-values-order file \
+            --template-files .template.md \
+            --output-file README.md
+          echo -e '{{ .cg }}Completed{{ .cc }}'
+
+  clean:
+    desc: Clean temporary directories and files from this Helm Chart
+    summary: |
+      Clean any temporary directories and files created by both this Taskfile,
+      and the tools and applications called from it.
+
+      - Remove any previous build Helm Charts.
+
+      This step explicitly does not remove the .environment file so that when
+      this Terraform configuration is re-initilisated the connected environment
+      remains, and the connection with the backend is restored.
+    silent: true
+    run: once
+    cmds:
+      - cmd: |-
+          rm -f *.tgz
+          echo -e '{{ .cg }}Completed{{ .cc }}'
