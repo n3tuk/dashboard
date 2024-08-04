@@ -81,7 +81,7 @@ func runServe(_ *cobra.Command, _ []string) error {
 	serve.Prepare()
 	logger.Start(attrs)
 
-	err = serve.Run()
+	serve.Run()
 
-	return err
+	return nil
 }
