@@ -3,6 +3,7 @@ package serve
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -11,16 +12,31 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/spf13/viper"
 
 	"github.com/n3tuk/dashboard/internal/serve/alive"
 	"github.com/n3tuk/dashboard/internal/serve/healthz"
+	"github.com/n3tuk/dashboard/internal/serve/metrics"
 
 	slogg "github.com/samber/slog-gin"
 )
 
 // timeout provides the time allowed to gracefully shut down the service.
 const timeout = 30 * time.Second
+
+var (
+	PrometheusDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "http_duration_seconds",
+		Help: "Duration of HTTP requests.",
+	}, []string{"path"})
+
+	PrometheusCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Count of HTTP requests.",
+	}, []string{"path", "status"})
+)
 
 // Run initiates the setup and startup of the web service, attaching the
 // endpoints avoidable in each of the packages for dashboard, as well as
@@ -37,6 +53,7 @@ func Run() {
 
 	alive.Attach(router)
 	healthz.Attach(router)
+	metrics.Attach(router)
 
 	// Initialising the server in a goroutine so that it won't block the capture
 	// and processing of the system interrupt
@@ -81,6 +98,7 @@ func SetupGin() *gin.Engine {
 	r := gin.New()
 
 	r.Use(Logger())
+	r.Use(Prometheus())
 	r.Use(gin.Recovery())
 
 	proxies := viper.GetStringSlice("web.bind.proxies")
@@ -115,10 +133,33 @@ func Logger() gin.HandlerFunc {
 				slogg.IgnorePath(
 					"/alive",
 					"/healthz",
+					"/metrics",
 				),
 			},
 		},
 	)
+}
+
+// Prometheus provides instrumentation for the API calls made to the web
+// service, counting both the number of requests made in total, and the time
+// taken to process those requests.
+func Prometheus() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var timer *prometheus.Timer
+
+		if c.FullPath() != "" {
+			timer = prometheus.NewTimer(
+				PrometheusDuration.WithLabelValues(c.FullPath()),
+			)
+		}
+
+		c.Next()
+
+		if timer != nil {
+			timer.ObserveDuration()
+			PrometheusCounter.WithLabelValues(c.FullPath(), fmt.Sprintf("%d", c.Writer.Status())).Inc()
+		}
+	}
 }
 
 // SetupServer sets up the http package web service, configuring the bindings
