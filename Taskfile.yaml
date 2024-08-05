@@ -101,6 +101,7 @@ tasks:
       - task: lint
       - task: test
       - task: build
+      - task: security
 
   lint:
     desc: Check linting of Go, JSON, YAML, and Markdown files
@@ -126,16 +127,12 @@ tasks:
       - task: markdownlint
 
   test:
-    desc: Run the unit tests and static code analysis
+    desc: Run the unit tests
     summary: |
-      Run the unit and integration tests for the Go application, as well as any
-      static code analysis and security analysis of the application with tools
-      such as Trivy and CodeQL.
+      Run the unit and integration tests for the Go application.
     silent: true
     cmds:
       - task: go:test
-      - task: go:trivy
-      - task: go:codeql
 
   build:
     desc: Locally build the application binary
@@ -146,6 +143,16 @@ tasks:
     silent: true
     cmds:
       - task: go:build
+
+  security:
+    desc: Run security and static code analysis checks against the application
+    summary: |
+      Run static code analysis and security analysis of the application with
+      tools such as Trivy and CodeQL.
+    silent: true
+    cmds:
+      - task: go:trivy
+      - task: go:codeql
 
   run:
     desc: Run the dashboard service
