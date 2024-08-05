@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -101,7 +102,7 @@ func SetupGin() *gin.Engine {
 	r.Use(Prometheus())
 	r.Use(gin.Recovery())
 
-	proxies := viper.GetStringSlice("web.bind.proxies")
+	proxies := viper.GetStringSlice("web.proxies")
 	if len(proxies) > 0 {
 		err := r.SetTrustedProxies(proxies)
 		if err != nil {
@@ -189,6 +190,7 @@ func RunServer(ctx context.Context, server *http.Server) {
 		slog.Group(
 			"server",
 			slog.String("address", server.Addr),
+			slog.String("proxies", strings.Join(viper.GetStringSlice("web.proxies"), ",")),
 		),
 	)
 

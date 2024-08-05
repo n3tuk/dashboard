@@ -13,6 +13,9 @@
         "bind": {
           "$ref": "#/$defs/bind"
         },
+        "proxies": {
+          "$ref": "#/$defs/proxies"
+        },
         "timeouts": {
           "$ref": "#/$defs/timeouts"
         }
@@ -29,15 +32,12 @@
         },
         "port": {
           "$ref": "#/$defs/port"
-        },
-        "proxies": {
-          "$ref": "#/$defs/proxies"
         }
       }
     },
     "address": {
       "title": "Service Address",
-      "description": "The hostname of IPv4/IPv6 address to bind the service to on startup",
+      "description": "The hostname or IPv4/IPv6 address to bind the service to on startup",
       "examples": ["localhost", "127.0.0.1", "::1"],
       "anyOf": [
         {
@@ -56,14 +56,14 @@
     },
     "port": {
       "title": "Service Port Number",
-      "description": "The TCP port number to bind the service to on startup",
+      "description": "The TCP port number to bind the web service to on startup",
       "type": "number",
       "minimum": 1025,
       "maximum": 65535
     },
     "proxies": {
       "title": "Proxy Addresses",
-      "description": "A list of IPv4 and IPv6 addresses or CIDRs which should be trusted for processing the remote Client address",
+      "description": "A list of IPv4 and/or IPv6 CIDRs which should be trusted for providing the remote Client address",
       "type": "array",
       "default": ["127.0.0.1", "::1"],
       "items": {
@@ -85,7 +85,7 @@
     },
     "timeouts": {
       "title": "Web Server Timeouts",
-      "description": "Configure timeouts for the web server",
+      "description": "Configure timeouts for the web service",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -103,35 +103,35 @@
         }
       }
     },
+    "timeout-headers": {
+      "title": "Request Headers Timeout",
+      "description": "The maximum time (in seconds) to read the headers for the request from the client",
+      "type": "number",
+      "default": 2,
+      "minimum": 0,
+      "maximum": 60
+    },
     "timeout-read": {
       "title": "Request Read Timeout",
-      "description": "The maximum time to read the full request, including the body, from the client",
+      "description": "The maximum time (in seconds) to read the full request, after the headers, from the client",
       "type": "number",
       "default": 5,
       "minimum": 0,
       "maximum": 60
     },
     "timeout-write": {
-      "title": "Request Read Timeout",
-      "description": "The maximum time to write the full response, including the body, to the client",
+      "title": "Request Write Timeout",
+      "description": "The maximum time (in seconds) to write the full response, including the body, to the client",
       "type": "number",
       "default": 10,
       "minimum": 0,
       "maximum": 60
     },
     "timeout-idle": {
-      "title": "Request Read Timeout",
-      "description": "The maximum time to keep a connection open between requests",
+      "title": "Request Idle Timeout",
+      "description": "The maximum time (in seconds) to keep a connection open between requests from a client",
       "type": "number",
       "default": 30,
-      "minimum": 0,
-      "maximum": 60
-    },
-    "timeout-headers": {
-      "title": "Request Headers Timeout",
-      "description": "The maximum time to read the headers for the request from the client",
-      "type": "number",
-      "default": 2,
       "minimum": 0,
       "maximum": 60
     },
