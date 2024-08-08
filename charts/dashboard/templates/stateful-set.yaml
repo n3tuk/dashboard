@@ -1,7 +1,7 @@
 ---
-{{- if (not .Values.persistentVolumeClaim.create) }}
+{{- if .Values.persistentVolumeClaim.create }}
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "dashboard.fullname" . }}
   namespace: {{ .Release.Namespace }}
@@ -20,11 +20,21 @@ spec:
   selector:
     matchLabels:
       {{- include "dashboard.selectorLabels" . | nindent 6 }}
-  progressDeadlineSeconds: 60
-  strategy:
+  serviceName: {{ include "dashboard.fullname" . }}
+  updateStrategy:
     type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ include "dashboard.fullname" . }}-vault
+      spec:
+        storageClassName: {{ .Values.persistentVolumeClaim.storageClassName }}
+        {{- with .Values.persistentVolumeClaim.accessModes }}
+        accessModes:
+          {{-   toYaml . | nindent 10 }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistentVolumeClaim.size }}
   template:
     metadata:
       {{- with .Values.pod.annotations }}
@@ -53,7 +63,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: {{ .Chart.Name | quote }}
-          image: "{{ .Values.pod.image.repository }}:{{ .Values.pod.image.tag | default (printf "v%s" .Chart.AppVersion) }}"
+          image: "{{ .Values.pod.image.repository }}:v{{ .Values.pod.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.pod.image.pullPolicy }}
           args:
             - serve
@@ -63,6 +73,9 @@ spec:
             {{- range .Values.pod.extraArgs }}
             - {{ . }}
             {{- end }}
+          volumeMounts:
+            - name: {{ include "dashboard.fullname" . }}-vault
+              mountPath: /data/vault
           ports:
             - containerPort: {{ .Values.service.port }}
               name: http

@@ -24,32 +24,36 @@ configure it through the `values.yaml` file.
 |-----|------|---------|-------------|
 | nameOverride | string | `nil` | Override the name of the objects created by this chart |
 | fullnameOverride | string | `nil` | Override the name of the objects created by this chart |
-| podDisruptionBudget.create | bool | `true` | Set whether or not to create the podDisruptionBudget resource for the dashboard deployment. |
-| podDisruptionBudget.minAvailable | int | `1` | The number of pods in a RepicaSet which much be available after an eviction, either absolute or a percentage. Only one of `minAvailable` or `maxAvailable` can be configured, with `minAvailable` taking priority. |
-| podDisruptionBudget.maxUnavilable | int | `0` | The number of pods in a RepicaSet which can be unavailable after an eviction, either absolute or a percentage. |
+| podDisruptionBudget.create | bool | `true` | Set whether or not to create the podDisruptionBudget resource for the dashboard deployment |
+| podDisruptionBudget.minAvailable | int | `1` | The number of pods in a RepicaSet which much be available after an eviction, either absolute or a percentage. Only one of `minAvailable` or `maxAvailable` can be configured, with `minAvailable` taking priority |
+| podDisruptionBudget.maxUnavilable | int | `0` | The number of pods in a RepicaSet which can be unavailable after an eviction, either absolute or a percentage |
 | podDisruptionBudget.annotations | object | `{}` | Set any additional annotations which should be added to the PodDisruptionBudget resource |
 | podDisruptionBudget.labels | object | `{}` | Set any additional labels which should be added to the PodDisruptionBudget resource |
 | service.type | string | `"ClusterIP"` | Set whether the Service should be a ClusterIP or NodeIP |
 | service.port | int | `8080` | Set the TCP port the Service should be configured to listen on |
 | service.annotations | object | `{}` | Set any additional annotations which should be added to the Ingress resource |
 | service.labels | object | `{}` | Set any additional labels which should be added to the Ingress resource |
-| ingress.create | bool | `false` | Set whether or not to create the Ingress for the dashboard Service. |
+| ingress.create | bool | `false` | Set whether or not to create the Ingress for the dashboard Service |
 | ingress.className | string | `nil` | Set the class name of the controller which will handle the Ingress |
 | ingress.annotations | object | `{}` | Set any additional annotations which should be added to the Ingress resource |
 | ingress.labels | object | `{}` | Set any additional labels which should be added to the Ingress resource |
 | ingress.hosts | list | `[]` | Set the hostname and path mappings for this service on the Ingress |
 | ingress.tls | list | `[]` | Set the TLS secret and hostnames for this service on the Ingress |
-| serviceAccount.create | bool | `false` | Set whether or not to create a ServiceAccount resource for the dashboard service. |
+| serviceAccount.create | bool | `false` | Set whether or not to create a ServiceAccount resource for the dashboard service |
 | serviceAccount.name | string | `nil` | Override the name of the ServiceAccount @default `.Chart.Name` |
 | serviceAccount.annotations | object | `{}` | Set any additional annotations which should be added to the ServiceAccount resource |
 | serviceAccount.labels | object | `{}` | Set any additional labels which should be added to the ServiceAccount resource |
-| networkPolicy.create | bool | `false` | Set whether or not to create a NetworkPolicy resource for the dashboard service. |
+| networkPolicy.create | bool | `false` | Set whether or not to create a NetworkPolicy resource for the dashboard service |
 | networkPolicy.annotations | object | `{}` | Set any additional annotations which should be added to the NetworkPolicy resource |
 | networkPolicy.labels | object | `{}` | Set any additional labels which should be added to the NetworkPolicy resource |
 | deployment.replicaCount | int | `1` | Set the number of replicas of this deployment which should be deployed onto the kubernetes cluster |
 | deployment.revisionHistoryLimit | int | `10` | Set the number of deployments which should be kept to enable a rollback of the deployment in the event of any issues or failures |
 | deployment.annotations | object | `{}` | Set any additional annotations which should be added to the Deployment resource |
 | deployment.labels | object | `{}` | Set any additional labels which should be added to the Deployment resource |
+| persistentVolumeClaim.create | bool | `false` | Set whether or not to create a PersistentVolumeClaim resource for the dashboard service and attach it to the Pods |
+| persistentVolumeClaim.storageClassName | string | `nil` | Set the name of the StorageClass to use for the volumes in the PersistentVolumeClaim |
+| persistentVolumeClaim.size | string | `"32Gi"` | Set the size of each PersistentVolumeClaim to be created |
+| persistentVolumeClaim.accessModes | list | `["ReadWriteOnce"]` | Configure the access modes to be set on the PersistentVolumeClaim |
 | pod.image.repository | string | `"ghcr.io/n3tuk/dashboard"` | Set the URI for the container image to be deployed for the dashboard Deployment |
 | pod.image.pullPolicy | string | `"IfNotPresent"` | Set the pull policy for the host running each Pod of the deployment |
 | pod.annotations | object | `{}` | Set any additional annotations which should be added to the Ingress resource |
