@@ -7,14 +7,14 @@ fullnameOverride:
 
 podDisruptionBudget:
   # -- Set whether or not to create the podDisruptionBudget resource for the
-  # dashboard deployment.
+  # dashboard deployment
   create: true
   # -- The number of pods in a RepicaSet which much be available after an
   # eviction, either absolute or a percentage. Only one of `minAvailable` or
-  # `maxAvailable` can be configured, with `minAvailable` taking priority.
+  # `maxAvailable` can be configured, with `minAvailable` taking priority
   minAvailable: 1
   # -- The number of pods in a RepicaSet which can be unavailable after an
-  # eviction, either absolute or a percentage.
+  # eviction, either absolute or a percentage
   maxUnavilable: 0
   # -- Set any additional annotations which should be added to the
   # PodDisruptionBudget resource
@@ -35,7 +35,7 @@ service:
   labels: {}
 
 ingress:
-  # -- Set whether or not to create the Ingress for the dashboard Service.
+  # -- Set whether or not to create the Ingress for the dashboard Service
   create: false
   # -- (string) Set the class name of the controller which will handle the
   # Ingress
@@ -61,7 +61,7 @@ ingress:
 
 serviceAccount:
   # -- Set whether or not to create a ServiceAccount resource for the dashboard
-  # service.
+  # service
   create: false
   # -- (string) Override the name of the ServiceAccount
   # @default `.Chart.Name`
@@ -75,7 +75,7 @@ serviceAccount:
 
 networkPolicy:
   # -- Set whether or not to create a NetworkPolicy resource for the dashboard
-  # service.
+  # service
   create: false
   # -- Set any additional annotations which should be added to the NetworkPolicy
   # resource
@@ -97,6 +97,19 @@ deployment:
   # -- Set any additional labels which should be added to the Deployment
   # resource
   labels: {}
+
+persistentVolumeClaim:
+  # -- Set whether or not to create a PersistentVolumeClaim resource for the
+  # dashboard service and attach it to the Pods
+  create: false
+  # -- (string) Set the name of the StorageClass to use for the volumes in the
+  # PersistentVolumeClaim
+  storageClassName:
+  # -- Set the size of each PersistentVolumeClaim to be created
+  size: 32Gi
+  # -- Configure the access modes to be set on the PersistentVolumeClaim
+  accessModes:
+    - ReadWriteOnce
 
 pod:
   image:
@@ -195,7 +208,7 @@ pod:
 
 serviceMonitor:
   # -- Set whether or not to create a ServiceMonitor resource for the dashboard
-  # service.
+  # service
   create: false
   # -- Set the number of seconds Prometheus should monitor the metrics for on
   # this service
