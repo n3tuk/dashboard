@@ -24,6 +24,10 @@ dist/
 # Ignore the tools/ directory for CI tooling setup
 tools/
 
+# Ignore temporary files or configuration for Helm Charts
+charts/*/*.tgz
+charts/*/deploy.yaml
+
 # Ignore mkdocs processing directories
 pages/dist/
 pages/public/

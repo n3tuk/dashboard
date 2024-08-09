@@ -1,0 +1,27 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "dashboard.fullname" . }}-frontend
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "dashboard.labels" . | nindent 4 }}
+    {{- with .Values.service.labels }}
+    {{-   toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "dashboard.selectorLabels" . | nindent 4 }}
+  # We want the servers to become available even if they're not ready since some
+  # of these ports are also used for join operations
+  publishNotReadyAddresses: true
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      protocol: TCP
+      targetPort: http

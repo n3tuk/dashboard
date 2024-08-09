@@ -1,0 +1,16 @@
+---
+apiVersion: v2
+name: dashboard
+version: '0.0.0'
+appVersion: '0.0.0'
+description: >-
+  A web service utility to manage and display events and status from component
+  systems in a centralised hub.
+type: application
+home: https://github.com/n3tuk/dashboad
+sources:
+  - https://n3tuk.github.io/dashboard/
+maintainers:
+  - name: Jonathan Wright
+    email: jon@than.io
+    url: https://github.com/jonathanio

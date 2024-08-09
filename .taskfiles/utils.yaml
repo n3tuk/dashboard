@@ -22,6 +22,8 @@ tasks:
       - task: check:go
       - task: check:goreleaser
       - task: check:mkdocs
+      - task: check:helm
+      - task: check:helm-docs
 
   # Run a check for a specific executable to ensure it's available within $PATH
   check:*:

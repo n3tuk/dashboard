@@ -22,7 +22,7 @@ func Attach(r *gin.Engine) {
 func healthz(c *gin.Context) {
 	slogg.AddCustomAttributes(c, slog.Group("healthz", slog.String("status", "ok")))
 	c.JSON(http.StatusOK, gin.H{
-		"status":   "ok",
+		"status":   "healthy",
 		"database": "unknown",
 		"queue":    "unknown",
 	})

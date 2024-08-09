@@ -129,7 +129,6 @@ tasks:
           mkdocs --version
       - cmd: |-
           mkdocs build \
-            --verbose \
             --config-file mkdocs.yaml \
             --clean --strict \
             --site-dir public

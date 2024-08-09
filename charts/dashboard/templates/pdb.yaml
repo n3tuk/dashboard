@@ -1,0 +1,30 @@
+---
+{{- if .Values.podDisruptionBudget.create }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "dashboard.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.podDisruptionBudget.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "dashboard.labels" . | nindent 4 }}
+    {{- with .Values.podDisruptionBudget.labels }}
+    {{-   toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "dashboard.selectorLabels" . | nindent 6 }}
+  {{- with .Values.podDisruptionBudget }}
+  {{-   if (and .minAvailable (gt (.minAvailable | int) 0)) }}
+  minAvailable: {{ .minAvailable }}
+  {{-   else if (and .maxUnavailable (gt (.maxUnavilable | int) 0)) }}
+  maxUnavailable: {{ .maxUnavailable }}
+  {{-   else }}
+  minAvailable: 1
+  {{-   end }}
+  {{- end }}
+{{- end }}

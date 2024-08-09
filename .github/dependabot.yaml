@@ -3,7 +3,7 @@ version: 2
 
 updates:
   - package-ecosystem: gomod
-    directory: /
+    directory: .
     schedule:
       interval: daily
       time: '18:30'
@@ -18,24 +18,8 @@ updates:
     reviewers:
       - jonathanio
 
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: daily
-      time: '18:30'
-      timezone: 'Europe/London'
-    commit-message:
-      prefix: python
-      include: scope
-    labels:
-      - type/dependencies
-      - update/python
-      - release/chore
-    reviewers:
-      - jonathanio
-
   - package-ecosystem: github-actions
-    directory: /
+    directory: .
     schedule:
       interval: daily
       time: '18:30'

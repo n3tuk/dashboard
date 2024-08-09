@@ -1,0 +1,70 @@
+---
+name: Helm
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  issues: read
+  actions: read
+  pull-requests: read
+  security-events: write
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          # Setting fetch-depth to 0 here should fetch all of the history and
+          # all of the tags for the current branch being built
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Set up kubeconform
+        uses: bmuschko/setup-kubeconform@v1
+        with:
+          kubeconform-version: '0.6.7'
+
+      - name: Lint the Helm Chart
+        run: |-
+          # helm lint
+          helm lint charts/dashboard
+
+      - name: Validate the Deployment
+        run: |-
+          # helm template
+          helm template -n default dashboard charts/dashboard \
+            --set serviceAccount.create=true \
+            --set networkPolicy.create=true \
+            --set serviceMonitor.create=true \
+          | kubeconform \
+            -ignore-missing-schemas \
+            -schema-location 'https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{{ .NormalizedKubernetesVersion }}-standalone{{ .StrictSuffix }}/{{ .ResourceKind }}{{ .KindSuffix }}.json' \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/crds-catalog/main/{{ .Group }}/{{ .ResourceKind }}_{{ .ResourceAPIVersion }}.json' \
+            -output pretty \
+            -verbose \
+            -summary
+
+      - name: Validate the StatefulSet
+        run: |-
+          # helm template
+          helm template -n default dashboard charts/dashboard \
+            --set serviceAccount.create=true \
+            --set networkPolicy.create=true \
+            --set serviceMonitor.create=true \
+            --set persistentVolumeClaim.create=true \
+          | kubeconform \
+            -ignore-missing-schemas \
+            -schema-location 'https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/{{ .NormalizedKubernetesVersion }}-standalone{{ .StrictSuffix }}/{{ .ResourceKind }}{{ .KindSuffix }}.json' \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/crds-catalog/main/{{ .Group }}/{{ .ResourceKind }}_{{ .ResourceAPIVersion }}.json' \
+            -output pretty \
+            -verbose \
+            -summary
