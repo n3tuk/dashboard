@@ -35,6 +35,9 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
 
+      - name: Set up Helm
+        uses: azure/setup-helm@v4.2.0
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -42,7 +45,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run GoReleaser
+      - name: Release with GoReleaser
         id: releaser
         uses: goreleaser/goreleaser-action@v6
         env:
@@ -51,3 +54,17 @@ jobs:
           distribution: goreleaser
           version: '~> v2'
           args: release --clean
+
+      - name: Package the Helm Chart
+        run: |-
+          # helm package
+          helm package charts/dashboard \
+            --app-version ${GITHUB_REF#*/v} \
+            --version${GITHUB_REF#*/v}
+
+      - name: Publish the Helm Chart
+        run: |-
+          # helm push
+          helm push \
+            dashboard-${GITHUB_REF#*/v}.tgz \
+            oci://ghcr.io/n3tuk/helm

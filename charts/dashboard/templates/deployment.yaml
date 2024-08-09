@@ -1,0 +1,139 @@
+---
+{{- if (not .Values.persistentVolumeClaim.create) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dashboard.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.deployment.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  labels:
+    {{- include "dashboard.labels" . | nindent 4 }}
+    {{- with .Values.deployment.labels }}
+    {{-   toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.deployment.replicaCount }}
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      {{- include "dashboard.selectorLabels" . | nindent 6 }}
+  progressDeadlineSeconds: 60
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+  template:
+    metadata:
+      {{- with .Values.pod.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "dashboard.labels" . | nindent 8 }}
+        {{- with .Values.pod.labels }}
+        {{-   toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      terminationGracePeriodSeconds: 45
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "dashboard.serviceAccountName" . }}
+      {{- end }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+        - name: {{ .Chart.Name | quote }}
+          image: "{{ .Values.pod.image.repository }}:{{ .Values.pod.image.tag | default (printf "v%s" .Chart.AppVersion) }}"
+          imagePullPolicy: {{ .Values.pod.image.pullPolicy }}
+          args:
+            - serve
+            - --log-level={{ .Values.pod.logging.level }}
+            - --log-json={{ if .Values.pod.logging.json }}true{{ else }}false{{ end }}
+            - --address=0.0.0.0
+            {{- range .Values.pod.extraArgs }}
+            - {{ . }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+            runAsUser: 65534
+            runAsGroup: 65534
+          {{- if .Values.pod.probes.startup.create }}
+          startupProbe:
+            httpGet:
+              path: /alive
+              port: http
+          {{-   with .Values.pod.probes.startup }}
+            periodSeconds: {{ .periodSeconds }}
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            timeoutSeconds: {{ .timeoutSeconds }}
+            successThreshold: {{ .successThreshold }}
+            failureThreshold: {{ .failureThreshold }}
+          {{-   end }}
+          {{- end }}
+          {{- if .Values.pod.probes.liveness.create }}
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: http
+          {{-   with .Values.pod.probes.liveness }}
+            periodSeconds: {{ .periodSeconds }}
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            timeoutSeconds: {{ .timeoutSeconds }}
+            successThreshold: {{ .successThreshold }}
+            failureThreshold: {{ .failureThreshold }}
+          {{-   end }}
+          {{- end }}
+          {{- if .Values.pod.probes.readiness.create }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          {{-   with .Values.pod.probes.readiness }}
+            periodSeconds: {{ .periodSeconds }}
+            initialDelaySeconds: {{ .initialDelaySeconds }}
+            timeoutSeconds: {{ .timeoutSeconds }}
+            successThreshold: {{ .successThreshold }}
+            failureThreshold: {{ .failureThreshold }}
+          {{-   end }}
+          {{- end }}
+          {{- with .Values.pod.resources }}
+          resources:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+      {{- with .Values.pod.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.pod.tolerations }}
+      tolerations:
+        {{- toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.pod.affinity }}
+      affinity:
+        {{- toYaml . | indent 8 }}
+      {{- end }}
+      {{- with .Values.pod.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
