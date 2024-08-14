@@ -51,6 +51,13 @@ var (
 	// idleTimeout is the maximum time to read the headers for the request from
 	// the client.
 	idleTimeout = 30
+	// shutdownTimeout is the maximum time to wait for the web service to finish
+	// handling all currently active requests before shutting down.
+	shutdownTimeout = 30
+	// shutdownMetrics is the maximum time to wait to shut down the metrics
+	// service and therefore shut down the application once the web service is
+	// closed.
+	shutdownMetrics = 5
 
 	// loggerConfig provides the application information which will be used for
 	// every log line to help provide context to all logs.
@@ -123,6 +130,10 @@ func init() {
 	flags.Int("idle-timeout", idleTimeout, "Timeout (in seconds) to keep a connection open between requests")
 	_ = viper.BindPFlag("endpoints.timeouts.idle", flags.Lookup("idle-timeout"))
 
+	viper.SetDefault("endpoints.timeouts.shutdown", shutdownTimeout)
+	flags.Int("shutdown-timeout", shutdownTimeout, "Timeout (in seconds) to wait for requests to finish")
+	_ = viper.BindPFlag("endpoints.timeouts.shutdown", flags.Lookup("shutdown-timeout"))
+
 	rootCmd.AddCommand(serveCmd)
 }
 
@@ -174,7 +185,8 @@ func runServe(_ *cobra.Command, _ []string) error {
 
 	m.PrepareShutdown()
 
-	if err := w.Shutdown(30 * time.Second); err != nil {
+	shutdown := time.Duration(viper.GetInt("endpoints.timeouts.shutdown")) * time.Second
+	if err := w.Shutdown(shutdown); err != nil {
 		slog.Error(
 			"Forced to shut down web service ungracefully",
 			slog.Group("error",
@@ -188,7 +200,8 @@ func runServe(_ *cobra.Command, _ []string) error {
 	// the client connections have been cleanly closed, so this is acceptable now
 	stop()
 
-	if err := m.Shutdown(5 * time.Second); err != nil {
+	shutdown = time.Duration(shutdownMetrics) * time.Second
+	if err := m.Shutdown(shutdown); err != nil {
 		slog.Error(
 			"Forced to shut down metrics service ungracefully",
 			slog.Group("error",

@@ -116,6 +116,9 @@
         },
         "idle": {
           "$ref": "#/$defs/timeout-idle"
+        },
+        "shutdown": {
+          "$ref": "#/$defs/timeout-shutdown"
         }
       }
     },
@@ -146,6 +149,14 @@
     "timeout-idle": {
       "title": "Request Idle Timeout",
       "description": "The maximum time (in seconds) to keep a connection open between requests from a client",
+      "type": "number",
+      "default": 30,
+      "minimum": 0,
+      "maximum": 60
+    },
+    "timeout-shutdown": {
+      "title": "Shutdown Timeout",
+      "description": "The maximum time (in seconds) to allow a service to continue to process requests from a client before forcefully closing connections",
       "type": "number",
       "default": 30,
       "minimum": 0,
