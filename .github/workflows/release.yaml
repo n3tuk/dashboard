@@ -60,7 +60,7 @@ jobs:
           # helm package
           helm package charts/dashboard \
             --app-version ${GITHUB_REF#*/v} \
-            --version${GITHUB_REF#*/v}
+            --version ${GITHUB_REF#*/v}
 
       - name: Publish the Helm Chart
         run: |-
