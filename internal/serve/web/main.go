@@ -28,7 +28,7 @@ func NewService() *Service {
 	router.Use(middleware.Prometheus())
 	router.Use(gin.Recovery())
 
-	proxies := viper.GetStringSlice("service.proxies")
+	proxies := viper.GetStringSlice("endpoints.proxies")
 	if len(proxies) > 0 {
 		err := router.SetTrustedProxies(proxies)
 		if err != nil {
@@ -42,16 +42,16 @@ func NewService() *Service {
 		}
 	}
 
-	address := viper.GetString("service.bind.address")
-	port := viper.GetString("service.bind.port.web")
+	address := viper.GetString("endpoints.bind.address")
+	port := viper.GetString("endpoints.bind.port.web")
 
 	service := &Service{
 		router: router,
 		server: &http.Server{
-			ReadTimeout:       time.Duration(viper.GetInt("service.timeouts.read")) * time.Second,
-			WriteTimeout:      time.Duration(viper.GetInt("service.timeouts.write")) * time.Second,
-			IdleTimeout:       time.Duration(viper.GetInt("service.timeouts.idle")) * time.Second,
-			ReadHeaderTimeout: time.Duration(viper.GetInt("service.timeouts.header")) * time.Second,
+			ReadTimeout:       time.Duration(viper.GetInt("endpoints.timeouts.read")) * time.Second,
+			WriteTimeout:      time.Duration(viper.GetInt("endpoints.timeouts.write")) * time.Second,
+			IdleTimeout:       time.Duration(viper.GetInt("endpoints.timeouts.idle")) * time.Second,
+			ReadHeaderTimeout: time.Duration(viper.GetInt("endpoints.timeouts.header")) * time.Second,
 
 			Addr:    net.JoinHostPort(address, port),
 			Handler: router,

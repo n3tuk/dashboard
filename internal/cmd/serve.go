@@ -90,38 +90,38 @@ func init() {
 	flags := serveCmd.Flags()
 
 	// Flags and default configuration for binding the web service
-	viper.SetDefault("web.bind.address", host)
+	viper.SetDefault("endpoints.bind.address", host)
 	flags.StringP("address", "a", host, "Address to bind the server to")
-	_ = viper.BindPFlag("web.bind.address", flags.Lookup("address"))
+	_ = viper.BindPFlag("endpoints.bind.address", flags.Lookup("address"))
 
-	viper.SetDefault("web.bind.port.web", webPort)
+	viper.SetDefault("endpoints.bind.port.web", webPort)
 	flags.IntP("web-port", "p", webPort, "The port to bind the web service to")
-	_ = viper.BindPFlag("web.bind.port.web", flags.Lookup("web-port"))
+	_ = viper.BindPFlag("endpoints.bind.port.web", flags.Lookup("web-port"))
 
-	viper.SetDefault("web.bind.port.metrics", metricsPort)
+	viper.SetDefault("endpoints.bind.port.metrics", metricsPort)
 	flags.IntP("metrics-port", "m", metricsPort, "The port to bind the metrics service to")
-	_ = viper.BindPFlag("web.bind.port.metrics", flags.Lookup("metrics-port"))
+	_ = viper.BindPFlag("endpoints.bind.port.metrics", flags.Lookup("metrics-port"))
 
-	viper.SetDefault("web.proxies", trustedProxies)
+	viper.SetDefault("endpoints.proxies", trustedProxies)
 	flags.StringSlice("proxies", trustedProxies, "A comma-separated list of CIDRs where trusted proxies are used")
-	_ = viper.BindPFlag("web.proxies", flags.Lookup("proxies"))
+	_ = viper.BindPFlag("endpoints.proxies", flags.Lookup("proxies"))
 
 	// Flags and default configurations for the web service timeouts
-	viper.SetDefault("web.timeouts.headers", headersTimeout)
+	viper.SetDefault("endpoints.timeouts.headers", headersTimeout)
 	flags.Int("headers-timeout", headersTimeout, "Timeout (in seconds) to read the headers for the request")
-	_ = viper.BindPFlag("web.timeouts.headers", flags.Lookup("headers-timeout"))
+	_ = viper.BindPFlag("endpoints.timeouts.headers", flags.Lookup("headers-timeout"))
 
-	viper.SetDefault("web.timeouts.read", readTimeout)
+	viper.SetDefault("endpoints.timeouts.read", readTimeout)
 	flags.Int("read-timeout", readTimeout, "Timeout (in seconds) to read the full request, after the headers")
-	_ = viper.BindPFlag("web.timeouts.read", flags.Lookup("read-timeout"))
+	_ = viper.BindPFlag("endpoints.timeouts.read", flags.Lookup("read-timeout"))
 
-	viper.SetDefault("web.timeouts.write", writeTimeout)
+	viper.SetDefault("endpoints.timeouts.write", writeTimeout)
 	flags.Int("write-timeout", writeTimeout, "Timeout (in seconds) to write the full response, including the body")
-	_ = viper.BindPFlag("web.timeouts.write", flags.Lookup("write-timeout"))
+	_ = viper.BindPFlag("endpoints.timeouts.write", flags.Lookup("write-timeout"))
 
-	viper.SetDefault("web.timeouts.idle", idleTimeout)
+	viper.SetDefault("endpoints.timeouts.idle", idleTimeout)
 	flags.Int("idle-timeout", idleTimeout, "Timeout (in seconds) to keep a connection open between requests")
-	_ = viper.BindPFlag("web.timeouts.idle", flags.Lookup("idle-timeout"))
+	_ = viper.BindPFlag("endpoints.timeouts.idle", flags.Lookup("idle-timeout"))
 
 	rootCmd.AddCommand(serveCmd)
 }

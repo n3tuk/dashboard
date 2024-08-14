@@ -1,8 +1,8 @@
 ---
-web:
+endpoints:
   bind:
     address: 0.0.0.0
-    port:
+    ports:
       web: 8080
       metrics: 8888
   proxies:
