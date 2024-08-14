@@ -63,7 +63,7 @@ spec:
         fsGroup: 65534
       containers:
         - name: {{ .Chart.Name | quote }}
-          image: "{{ .Values.pod.image.repository }}:v{{ .Values.pod.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.pod.image.repository }}:{{ .Values.pod.image.tag | default (printf "v%s" .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.pod.image.pullPolicy }}
           args:
             - serve
