@@ -70,6 +70,8 @@ spec:
             - --log-level={{ .Values.pod.logging.level }}
             - --log-json={{ if .Values.pod.logging.json }}true{{ else }}false{{ end }}
             - --address=0.0.0.0
+            - --web-port={{ .Values.service.webPort }}
+            - --metrics-port={{ .Values.service.metricsPort }}
             {{- range .Values.pod.extraArgs }}
             - {{ . }}
             {{- end }}
@@ -77,8 +79,10 @@ spec:
             - name: {{ include "dashboard.fullname" . }}-vault
               mountPath: /data/vault
           ports:
-            - containerPort: {{ .Values.service.port }}
-              name: http
+            - containerPort: {{ .Values.service.webPort }}
+              name: web
+            - containerPort: {{ .Values.service.metricsPort }}
+              name: metrics
           securityContext:
             runAsNonRoot: true
             allowPrivilegeEscalation: false
@@ -94,7 +98,7 @@ spec:
           startupProbe:
             httpGet:
               path: /alive
-              port: http
+              port: metrics
           {{-   with .Values.pod.probes.startup }}
             periodSeconds: {{ .periodSeconds }}
             initialDelaySeconds: {{ .initialDelaySeconds }}
@@ -107,7 +111,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /alive
-              port: http
+              port: metrics
           {{-   with .Values.pod.probes.liveness }}
             periodSeconds: {{ .periodSeconds }}
             initialDelaySeconds: {{ .initialDelaySeconds }}
@@ -120,7 +124,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /healthz
-              port: http
+              port: metrics
           {{-   with .Values.pod.probes.readiness }}
             periodSeconds: {{ .periodSeconds }}
             initialDelaySeconds: {{ .initialDelaySeconds }}

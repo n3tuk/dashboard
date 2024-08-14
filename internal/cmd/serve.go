@@ -1,16 +1,23 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/n3tuk/dashboard/internal/config"
 	"github.com/n3tuk/dashboard/internal/logger"
-	"github.com/n3tuk/dashboard/internal/serve"
+	"github.com/n3tuk/dashboard/internal/serve/metrics"
+	"github.com/n3tuk/dashboard/internal/serve/web"
 )
 
 const (
@@ -23,8 +30,10 @@ var (
 	// host is the hostname or IPv4/IPv6 address to bind the service to on
 	// startup.
 	host = "localhost"
-	// port is the TCP port number to bind the web service to on startup.
-	port = 8080
+	// webPort is the TCP port number to bind the web service to on startup.
+	webPort = 8080
+	// metricsPort is the TCP port number to bind the metrics service to on startup.
+	metricsPort = 8888
 
 	// trustedProxies is a list of IPv4 and/or IPv6 CIDRs which should be trusted
 	// for providing the remote Client address.
@@ -43,13 +52,22 @@ var (
 	// the client.
 	idleTimeout = 30
 
+	// loggerConfig provides the application information which will be used for
+	// every log line to help provide context to all logs.
+	loggerConfig = &map[string]string{
+		"name":       Name,
+		"version":    Version,
+		"commit":     Commit,
+		"arch":       Architecture,
+		"build-date": BuildDate,
+	}
+
 	// serveCmd represents the serve command for the dashboard application, and will
 	// provide the setup and arguments needed for the application to start the web
 	// service and start processing events.
 	serveCmd = &cobra.Command{
-		Use:     "serve [options]",
-		Aliases: []string{"web"},
-		Short:   "Start the web server to serve dashboard web requests",
+		Use:   "serve [options]",
+		Short: "Start the web server to serve dashboard web requests",
 		Long: heredoc.Doc(`
 		  dashboard serve provides the web service which runs the processing of
 		  events submitted to the dashboard, to be saved and pushed out to the
@@ -59,9 +77,7 @@ var (
 		// Add blank line at the top for enforced extra spacing in the output
 		Example: strings.TrimRight(heredoc.Doc(`
 
-	    $ dashboard serve \
-	        --address 0.0.0.0 \
-	        --port 8080
+	    $ dashboard serve --address 0.0.0.0 --web-port 8080 --metrics-port 8081
 	  `), "\n"),
 
 		RunE: runServe,
@@ -78,9 +94,13 @@ func init() {
 	flags.StringP("address", "a", host, "Address to bind the server to")
 	_ = viper.BindPFlag("web.bind.address", flags.Lookup("address"))
 
-	viper.SetDefault("web.bind.port", port)
-	flags.IntP("port", "p", port, "The port to bind the server to")
-	_ = viper.BindPFlag("web.bind.port", flags.Lookup("port"))
+	viper.SetDefault("web.bind.port.web", webPort)
+	flags.IntP("web-port", "p", webPort, "The port to bind the web service to")
+	_ = viper.BindPFlag("web.bind.port.web", flags.Lookup("web-port"))
+
+	viper.SetDefault("web.bind.port.metrics", metricsPort)
+	flags.IntP("metrics-port", "m", metricsPort, "The port to bind the metrics service to")
+	_ = viper.BindPFlag("web.bind.port.metrics", flags.Lookup("metrics-port"))
 
 	viper.SetDefault("web.proxies", trustedProxies)
 	flags.StringSlice("proxies", trustedProxies, "A comma-separated list of CIDRs where trusted proxies are used")
@@ -111,6 +131,8 @@ func init() {
 // services, and waiting for events to be sent to it for processing. If there
 // was an error processing the configuration or initialising the web service or
 // its connections, an `error` will be returned.
+//
+//nolint:funlen // ignore
 func runServe(_ *cobra.Command, _ []string) error {
 	err := config.Load(serveConfigName, configFile)
 	if err != nil {
@@ -118,17 +140,62 @@ func runServe(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("\n  %w\n", err)
 	}
 
-	// As this is a web service, include more information about the release and
-	// build environment to make it easier to track and debug changes from logs
-	logger.Start(&map[string]string{
-		"name":       Name,
-		"version":    Version,
-		"commit":     Commit,
-		"arch":       Architecture,
-		"build-date": BuildDate,
-	})
+	gin.SetMode(gin.ReleaseMode)
+	logger.Start(loggerConfig)
 
-	serve.Run()
+	// Create a context that listens for the interrupt signal from the Operating
+	// System so we can capture it and then trigger a graceful shutdown
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	m := metrics.NewService()
+	w := web.NewService()
+
+	e := make(chan error)
+
+	// Start the web service first as the metrics service will report the health
+	// of the service, so we should be ready to receive requests before the
+	// service is reporting as healthy
+	go w.Start(e)
+	go m.Start(e)
+
+	// Restore default behaviour on the interrupt signal and notify user of shutdown.
+	select {
+	case <-ctx.Done():
+		slog.Info("Shutting down dashboard gracefully")
+	case err := <-e:
+		slog.Error(
+			"Shutting down dashboard due to startup failure",
+			slog.Group("error",
+				slog.String("message", err.Error()),
+			),
+		)
+	}
+
+	m.PrepareShutdown()
+
+	if err := w.Shutdown(30 * time.Second); err != nil {
+		slog.Error(
+			"Forced to shut down web service ungracefully",
+			slog.Group("error",
+				slog.String("message", err.Error()),
+			),
+		)
+	}
+
+	// Only once all the above steps are processed, allow the signals to be
+	// processed again, allowing the application to be forcefully terminated, but
+	// the client connections have been cleanly closed, so this is acceptable now
+	stop()
+
+	if err := m.Shutdown(5 * time.Second); err != nil {
+		slog.Error(
+			"Forced to shut down metrics service ungracefully",
+			slog.Group("error",
+				slog.String("message", err.Error()),
+			),
+		)
+	}
 
 	return nil
 }

@@ -30,7 +30,8 @@ configure it through the `values.yaml` file.
 | podDisruptionBudget.annotations | object | `{}` | Set any additional annotations which should be added to the PodDisruptionBudget resource |
 | podDisruptionBudget.labels | object | `{}` | Set any additional labels which should be added to the PodDisruptionBudget resource |
 | service.type | string | `"ClusterIP"` | Set whether the Service should be a ClusterIP or NodeIP |
-| service.port | int | `8080` | Set the TCP port the Service should be configured to listen on |
+| service.webPort | int | `8080` | Set the TCP port the web service should be configured to listen on |
+| service.metricsPort | int | `8888` | Set the TCP port the metrics service should be configured to listen on |
 | service.annotations | object | `{}` | Set any additional annotations which should be added to the Ingress resource |
 | service.labels | object | `{}` | Set any additional labels which should be added to the Ingress resource |
 | ingress.create | bool | `false` | Set whether or not to create the Ingress for the dashboard Service |

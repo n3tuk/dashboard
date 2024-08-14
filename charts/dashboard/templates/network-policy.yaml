@@ -26,5 +26,5 @@ spec:
             cidr: 0.0.0.0/0
       ports:
         - protocol: TCP
-          port: http
+          port: web
 {{- end }}

@@ -2,7 +2,9 @@
 web:
   bind:
     address: 0.0.0.0
-    port: 8080
+    port:
+      web: 8080
+      metrics: 8888
   proxies:
     - '::1'
     - '172.27.4.188'

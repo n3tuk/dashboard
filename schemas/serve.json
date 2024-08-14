@@ -55,9 +55,32 @@
       ]
     },
     "port": {
-      "title": "Service Port Number",
+      "title": "The ports for services to bind to",
+      "description": "The configuration for the various service ports to bind to",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "web": {
+          "$ref": "#/$defs/web-port"
+        },
+        "metrics": {
+          "$ref": "#/$defs/metrics-port"
+        }
+      }
+    },
+    "web-port": {
+      "title": "Web Service Port",
       "description": "The TCP port number to bind the web service to on startup",
       "type": "number",
+      "default": 8080,
+      "minimum": 1025,
+      "maximum": 65535
+    },
+    "metrics-port": {
+      "title": "Metrics Service Port",
+      "description": "The TCP port number to bind the metrics service to on startup",
+      "type": "number",
+      "default": 8888,
       "minimum": 1025,
       "maximum": 65535
     },
