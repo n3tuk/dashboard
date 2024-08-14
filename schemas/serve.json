@@ -2,11 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://github.com/n3tuk/dashboard/blob/main/schemas/serve.json",
   "title": "dashboard serve Configuration File",
-  "description": "The configuration file for the dashboard application when running as a web service",
+  "description": "The configuration file for the dashboard application when running as a service",
   "$defs": {
-    "web": {
-      "title": "Web Servie Configuration",
-      "description": "The configuration for the web service",
+    "endpoints": {
+      "title": "Application Endpoints Configuration",
+      "description": "The configuration for the application endpoints",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -22,16 +22,16 @@
       }
     },
     "bind": {
-      "title": "The Web Serve Configuration",
-      "description": "The configuration for binding the web service on startup",
+      "title": "Service Binding Configuration",
+      "description": "The configuration for binding the application service on startup",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "address": {
           "$ref": "#/$defs/address"
         },
-        "port": {
-          "$ref": "#/$defs/port"
+        "ports": {
+          "$ref": "#/$defs/ports"
         }
       }
     },
@@ -54,9 +54,25 @@
         }
       ]
     },
+    "ports": {
+      "title": "The ports for services to bind to",
+      "description": "The configuration for the various service ports to bind to",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "web": {
+          "$ref": "#/$defs/port",
+          "default": 8080
+        },
+        "metrics": {
+          "$ref": "#/$defs/port",
+          "default": 8888
+        }
+      }
+    },
     "port": {
-      "title": "Service Port Number",
-      "description": "The TCP port number to bind the web service to on startup",
+      "title": "Web Service Port",
+      "description": "The TCP port number to bind the service to on startup",
       "type": "number",
       "minimum": 1025,
       "maximum": 65535
@@ -84,11 +100,14 @@
       }
     },
     "timeouts": {
-      "title": "Web Server Timeouts",
-      "description": "Configure timeouts for the web service",
+      "title": "Server Timeouts",
+      "description": "Configure timeouts for the application service",
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "headers": {
+          "$ref": "#/$defs/timeout-headers"
+        },
         "read": {
           "$ref": "#/$defs/timeout-read"
         },
@@ -98,8 +117,8 @@
         "idle": {
           "$ref": "#/$defs/timeout-idle"
         },
-        "headers": {
-          "$ref": "#/$defs/timeout-headers"
+        "shutdown": {
+          "$ref": "#/$defs/timeout-shutdown"
         }
       }
     },
@@ -135,6 +154,14 @@
       "minimum": 0,
       "maximum": 60
     },
+    "timeout-shutdown": {
+      "title": "Shutdown Timeout",
+      "description": "The maximum time (in seconds) to allow a service to continue to process requests from a client before forcefully closing connections",
+      "type": "number",
+      "default": 30,
+      "minimum": 0,
+      "maximum": 60
+    },
     "logging": {
       "title": "Logging Configuration",
       "description": "Configure the logging output from the dashboard send command",
@@ -162,8 +189,8 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "web": {
-      "$ref": "#/$defs/web"
+    "endpoints": {
+      "$ref": "#/$defs/endpoints"
     },
     "logging": {
       "$ref": "#/$defs/logging"

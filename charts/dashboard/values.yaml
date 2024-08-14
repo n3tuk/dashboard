@@ -26,8 +26,10 @@ podDisruptionBudget:
 service:
   # -- Set whether the Service should be a ClusterIP or NodeIP
   type: ClusterIP
-  # -- Set the TCP port the Service should be configured to listen on
-  port: 8080
+  # -- Set the TCP port the web service should be configured to listen on
+  webPort: 8080
+  # -- Set the TCP port the metrics service should be configured to listen on
+  metricsPort: 8888
   # -- Set any additional annotations which should be added to the Ingress
   # resource
   annotations: {}

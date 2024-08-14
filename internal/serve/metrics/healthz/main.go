@@ -9,9 +9,13 @@ import (
 	slogg "github.com/samber/slog-gin"
 )
 
+var shuttingDown *bool
+
 // Attach takes a reference to the Gin engine and attaches all the expected
 // endpoints which cam be used by clients through this package.
-func Attach(r *gin.Engine) {
+func Attach(r *gin.Engine, shutdown *bool) {
+	shuttingDown = shutdown
+
 	r.GET("/healthz", healthz)
 }
 
@@ -20,10 +24,19 @@ func Attach(r *gin.Engine) {
 // on their overall status, allowing the service to be marked as unhealthy and
 // to stop processing further requests if there are known issues.
 func healthz(c *gin.Context) {
-	slogg.AddCustomAttributes(c, slog.Group("healthz", slog.String("status", "ok")))
-	c.JSON(http.StatusOK, gin.H{
-		"status":   "healthy",
-		"database": "unknown",
-		"queue":    "unknown",
-	})
+	if shuttingDown == nil || *shuttingDown {
+		slogg.AddCustomAttributes(c, slog.Group("healthz", slog.String("status", "not-ok")))
+		c.JSON(http.StatusGone, gin.H{
+			"status":   "shutting-down",
+			"database": "unknown",
+			"queue":    "unknown",
+		})
+	} else {
+		slogg.AddCustomAttributes(c, slog.Group("healthz", slog.String("status", "ok")))
+		c.JSON(http.StatusOK, gin.H{
+			"status":   "healthy",
+			"database": "unknown",
+			"queue":    "unknown",
+		})
+	}
 }

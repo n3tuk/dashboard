@@ -1,4 +1,4 @@
-package metrics
+package web
 
 import (
 	"context"
@@ -9,19 +9,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/viper"
 
-	"github.com/n3tuk/dashboard/internal/serve/metrics/alive"
-	"github.com/n3tuk/dashboard/internal/serve/metrics/healthz"
 	"github.com/n3tuk/dashboard/internal/serve/middleware"
+	"github.com/n3tuk/dashboard/internal/serve/web/ping"
 )
 
 type Service struct {
-	attr         slog.Attr
-	router       *gin.Engine
-	server       *http.Server
-	shuttingDown bool
+	attr   slog.Attr
+	router *gin.Engine
+	server *http.Server
 }
 
 func NewService() *Service {
@@ -46,7 +43,7 @@ func NewService() *Service {
 	}
 
 	address := viper.GetString("endpoints.bind.address")
-	port := viper.GetString("endpoints.bind.port.metrics")
+	port := viper.GetString("endpoints.bind.port.web")
 
 	service := &Service{
 		router: router,
@@ -60,21 +57,15 @@ func NewService() *Service {
 			Handler: router,
 		},
 
-		shuttingDown: false,
-
 		attr: slog.Group(
 			"server",
-			slog.String("service", "metrics"),
+			slog.String("service", "web"),
 			slog.String("address", address),
 			slog.String("port", port),
 		),
 	}
 
-	Attach(router)
-	alive.Attach(router)
-	healthz.Attach(router, &service.shuttingDown)
-
-	// Set up the default 404 handler
+	ping.Attach(router)
 	router.NoRoute(notFound)
 
 	return service
@@ -83,18 +74,18 @@ func NewService() *Service {
 func (s *Service) Start(e chan error) {
 	if s.server == nil {
 		slog.Error(
-			"Failed to start metrics service",
+			"Failed to start web service",
 			slog.Group("error", slog.String("message", "service not configured")),
 			s.attr,
 		)
 	}
 
-	slog.Info("Starting dashboard metrics service", s.attr)
+	slog.Info("Starting dashboard web service", s.attr)
 
 	err := s.server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		slog.Error(
-			"Failed to start metrics service",
+			"Failed to start web service",
 			slog.Group("error", slog.String("message", err.Error())),
 			s.attr,
 		)
@@ -102,13 +93,8 @@ func (s *Service) Start(e chan error) {
 	}
 }
 
-func (s *Service) PrepareShutdown() {
-	slog.Info("Preparing for metrics service for web service shutdown", s.attr)
-	s.shuttingDown = true
-}
-
 func (s *Service) Shutdown(timeout time.Duration) error {
-	slog.Info("Shutting down the metrics service", s.attr)
+	slog.Info("Shutting down the web service", s.attr)
 
 	// Create a context that is used to inform the server it has only a set time
 	// to finish the request it is currently handling before being shut down
@@ -122,19 +108,14 @@ func (s *Service) Shutdown(timeout time.Duration) error {
 	return nil
 }
 
-// Attach takes a reference to the Gin engine and attaches all the expected
-// endpoints which cam be used by clients through this package.
-func Attach(r *gin.Engine) {
-	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
-}
-
 // notFound provides the default handler for requests to the API which have no
 // route, and therefore cannot be processed, necessitating a 404 (Page Not
 // Found) response back to the client.
 func notFound(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{
-		"status":  "page-not-found",
 		"code":    http.StatusNotFound,
-		"message": "Page not found",
+		"status":  "page-not-found",
+		"message": "The path requested could not be found",
+		"path":    c.Request.URL.Path,
 	})
 }

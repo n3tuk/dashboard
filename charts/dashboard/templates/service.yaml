@@ -21,7 +21,11 @@ spec:
   # of these ports are also used for join operations
   publishNotReadyAddresses: true
   ports:
-    - name: http
-      port: {{ .Values.service.port }}
+    - name: web
+      port: {{ .Values.service.webPort }}
       protocol: TCP
-      targetPort: http
+      targetPort: web
+    - name: metrics
+      port: {{ .Values.service.metricsPort }}
+      protocol: TCP
+      targetPort: metrics
