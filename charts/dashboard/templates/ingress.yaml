@@ -27,8 +27,8 @@ spec:
         {{- end }}
     {{- end }}
   {{- end }}
-  {{- $fullName := include "dashboard.fullname" . }}
-  {{- $svcPort := .Values.service.port }}
+  {{- $name := include "dashboard.fullname" . }}
+  {{- $webPort := .Values.service.webPort }}
   rules:
     {{- range .Values.ingress.hosts }}
     - host: {{ .host | quote }}
@@ -39,9 +39,9 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ $fullName }}-frontend
+                name: {{ $name }}-frontend
                 port:
-                  number: {{ $svcPort }}
+                  number: {{ $webPort }}
           {{- end }}
     {{- end }}
 {{- end }}
