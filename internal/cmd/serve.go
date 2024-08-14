@@ -59,16 +59,6 @@ var (
 	// closed.
 	shutdownMetrics = 5
 
-	// loggerConfig provides the application information which will be used for
-	// every log line to help provide context to all logs.
-	loggerConfig = &map[string]string{
-		"name":       Name,
-		"version":    Version,
-		"commit":     Commit,
-		"arch":       Architecture,
-		"build-date": BuildDate,
-	}
-
 	// serveCmd represents the serve command for the dashboard application, and will
 	// provide the setup and arguments needed for the application to start the web
 	// service and start processing events.
@@ -152,7 +142,13 @@ func runServe(_ *cobra.Command, _ []string) error {
 	}
 
 	gin.SetMode(gin.ReleaseMode)
-	logger.Start(loggerConfig)
+	logger.Start(&map[string]string{
+		"name":       Name,
+		"version":    Version,
+		"commit":     Commit,
+		"arch":       Architecture,
+		"build-date": BuildDate,
+	})
 
 	// Create a context that listens for the interrupt signal from the Operating
 	// System so we can capture it and then trigger a graceful shutdown
