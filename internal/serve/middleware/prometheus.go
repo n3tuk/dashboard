@@ -64,7 +64,11 @@ var (
 func Prometheus(service string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := strings.ToUpper(c.Request.Method)
+
 		path := c.FullPath()
+		if path == "" {
+			path = "404"
+		}
 
 		active.WithLabelValues(service).Inc()
 		defer active.WithLabelValues(service).Dec()
