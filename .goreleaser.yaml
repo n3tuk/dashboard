@@ -11,7 +11,7 @@ release:
 changelog:
   disable: true
 snapshot:
-  name_template: >-
+  version_template: >-
     {{ incpatch .Version }}~d{{ .Now.Format "0601021504" }}
 checksum:
   name_template: |-
