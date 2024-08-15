@@ -19,7 +19,7 @@ var (
 		MaxAge: 15 * time.Second,
 		//nolint:mnd // ignore
 		Objectives: map[float64]float64{0.25: 0.01, 0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	}, []string{"service"})
+	}, []string{"endpoint"})
 
 	duration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Subsystem: "http",
@@ -27,13 +27,13 @@ var (
 		Help:      "Duration of HTTP requests.",
 		//nolint:mnd // ignore
 		Buckets: prometheus.ExponentialBucketsRange(0.00001, 2, 15),
-	}, []string{"service", "method", "path", "status"})
+	}, []string{"endpoint", "method", "path", "status"})
 
 	requests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Subsystem: "http",
 		Name:      "request_total",
 		Help:      "Count of HTTP requests.",
-	}, []string{"service", "method", "path", "status"})
+	}, []string{"endpoint", "method", "path", "status"})
 
 	requestSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Subsystem: "http",
@@ -41,7 +41,7 @@ var (
 		Help:      "Size of the HTTP requests.",
 		//nolint:mnd // ignore
 		Buckets: prometheus.ExponentialBuckets(64, 2, 10),
-	}, []string{"service", "method", "path", "status"})
+	}, []string{"endpoint", "method", "path", "status"})
 
 	responseSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Subsystem: "http",
@@ -49,19 +49,19 @@ var (
 		Help:      "Size of the HTTP responses.",
 		//nolint:mnd // ignore
 		Buckets: prometheus.ExponentialBuckets(2, 2, 16),
-	}, []string{"service", "method", "path", "status"})
+	}, []string{"endpoint", "method", "path", "status"})
 
 	active = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Subsystem: "http",
 		Name:      "request_open",
 		Help:      "Number of requests being actively handled.",
-	}, []string{"service"})
+	}, []string{"endpoint"})
 )
 
 // Prometheus provides instrumentation for the API calls made to a connected
-// service, counting both the number of requests being processed, the number
+// endpoint, counting both the number of requests being processed, the number
 // requested in total, and the time taken to process those requests.
-func Prometheus(service string) gin.HandlerFunc {
+func Prometheus(endpoint string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		method := strings.ToUpper(c.Request.Method)
 
@@ -70,8 +70,8 @@ func Prometheus(service string) gin.HandlerFunc {
 			path = "404"
 		}
 
-		active.WithLabelValues(service).Inc()
-		defer active.WithLabelValues(service).Dec()
+		active.WithLabelValues(endpoint).Inc()
+		defer active.WithLabelValues(endpoint).Dec()
 
 		timer := time.Now()
 		defer func(c *gin.Context, t time.Time) {
@@ -89,11 +89,11 @@ func Prometheus(service string) gin.HandlerFunc {
 				requestBytes = 0
 			}
 
-			requests.WithLabelValues(service, method, path, status).Inc()
-			duration.WithLabelValues(service, method, path, status).Observe(taken)
-			summary.WithLabelValues(service).Observe(taken)
-			requestSize.WithLabelValues(service, method, path, status).Observe(requestBytes)
-			responseSize.WithLabelValues(service, method, path, status).Observe(responseBytes)
+			requests.WithLabelValues(endpoint, method, path, status).Inc()
+			duration.WithLabelValues(endpoint, method, path, status).Observe(taken)
+			summary.WithLabelValues(endpoint).Observe(taken)
+			requestSize.WithLabelValues(endpoint, method, path, status).Observe(requestBytes)
+			responseSize.WithLabelValues(endpoint, method, path, status).Observe(responseBytes)
 		}(c, timer)
 
 		c.Next()
