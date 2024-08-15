@@ -26,7 +26,7 @@ func NewMetrics(namespace string) *Metrics {
 				Name:      "request_duration_seconds",
 				Help:      "The latency of the HTTP requests.",
 				//nolint:mnd // these are the building blocks for buckets
-				Buckets: prometheus.ExponentialBuckets(0.005, 2, 10),
+				Buckets: prometheus.ExponentialBuckets(0.0005, 2, 12),
 			},
 			[]string{"service", "handler", "method", "path", "status"},
 		),

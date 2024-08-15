@@ -124,6 +124,10 @@ func init() {
 	flags.Int("shutdown-timeout", shutdownTimeout, "Timeout (in seconds) to wait for requests to finish")
 	_ = viper.BindPFlag("endpoints.timeouts.shutdown", flags.Lookup("shutdown-timeout"))
 
+	viper.SetDefault("logging.metrics", false)
+	flags.Bool("log-metrics", false, "Set whether to log metrics port requests")
+	_ = viper.BindPFlag("logging.metrics", flags.Lookup("log-metrics"))
+
 	rootCmd.AddCommand(serveCmd)
 }
 

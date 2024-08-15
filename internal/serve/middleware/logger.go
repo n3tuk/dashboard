@@ -21,11 +21,6 @@ func Logger() gin.HandlerFunc {
 					http.StatusUnauthorized,
 					http.StatusNotFound,
 				),
-				// slogg.IgnorePath(
-				// 	"/alive",
-				// 	"/healthz",
-				// 	"/metrics",
-				// ),
 			},
 		},
 	)

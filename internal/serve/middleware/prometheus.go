@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -9,102 +11,87 @@ import (
 )
 
 var (
-	PrometheusDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "http_duration_seconds",
-		Help: "Duration of HTTP requests.",
-	}, []string{"path"})
+	summary = promauto.NewSummaryVec(prometheus.SummaryOpts{
+		Subsystem: "http",
+		Name:      "response_seconds",
+		Help:      "Duration of HTTP requests.",
+		//nolint:mnd // ignore
+		MaxAge: 15 * time.Second,
+		//nolint:mnd // ignore
+		Objectives: map[float64]float64{0.25: 0.01, 0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
+	}, []string{"service"})
 
-	PrometheusCounter = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_total",
-		Help: "Count of HTTP requests.",
-	}, []string{"path", "status"})
+	duration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Subsystem: "http",
+		Name:      "response_endpoints_seconds",
+		Help:      "Duration of HTTP requests.",
+		//nolint:mnd // ignore
+		Buckets: prometheus.ExponentialBucketsRange(0.00001, 2, 15),
+	}, []string{"service", "method", "path", "status"})
+
+	requests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Subsystem: "http",
+		Name:      "request_total",
+		Help:      "Count of HTTP requests.",
+	}, []string{"service", "method", "path", "status"})
+
+	requestSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Subsystem: "http",
+		Name:      "request_size_bytes",
+		Help:      "Size of the HTTP requests.",
+		//nolint:mnd // ignore
+		Buckets: prometheus.ExponentialBuckets(64, 2, 10),
+	}, []string{"service", "method", "path", "status"})
+
+	responseSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Subsystem: "http",
+		Name:      "response_size_bytes",
+		Help:      "Size of the HTTP responses.",
+		//nolint:mnd // ignore
+		Buckets: prometheus.ExponentialBuckets(2, 2, 16),
+	}, []string{"service", "method", "path", "status"})
+
+	active = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Subsystem: "http",
+		Name:      "request_open",
+		Help:      "Number of requests being actively handled.",
+	}, []string{"service"})
 )
 
-// PrometheusMiddleware provides instrumentation for the API calls made to a
-// connected service, counting both the number of requests being processed, the
-// number requested in total, and the time taken to process those requests.
-func Prometheus() gin.HandlerFunc {
+// Prometheus provides instrumentation for the API calls made to a connected
+// service, counting both the number of requests being processed, the number
+// requested in total, and the time taken to process those requests.
+func Prometheus(service string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var timer *prometheus.Timer
+		method := strings.ToUpper(c.Request.Method)
+		path := c.FullPath()
 
-		if c.FullPath() != "" {
-			timer = prometheus.NewTimer(
-				PrometheusDuration.WithLabelValues(c.FullPath()),
-			)
-		}
+		active.WithLabelValues(service).Inc()
+		defer active.WithLabelValues(service).Dec()
+
+		timer := time.Now()
+		defer func(c *gin.Context, t time.Time) {
+			taken := time.Since(t).Seconds()
+
+			status := fmt.Sprintf("%d", c.Writer.Status())
+			if status == "0" {
+				status = "200"
+			}
+
+			responseBytes := float64(c.Writer.Size())
+
+			requestBytes := float64(c.Request.ContentLength)
+			if requestBytes < 0 {
+				requestBytes = 0
+			}
+
+			requests.WithLabelValues(service, method, path, status).Inc()
+			duration.WithLabelValues(service, method, path, status).Observe(taken)
+			summary.WithLabelValues(service).Observe(taken)
+			requestSize.WithLabelValues(service, method, path, status).Observe(requestBytes)
+			responseSize.WithLabelValues(service, method, path, status).Observe(responseBytes)
+		}(c, timer)
 
 		c.Next()
-
-		if timer != nil {
-			timer.ObserveDuration()
-			PrometheusCounter.WithLabelValues(c.FullPath(), fmt.Sprintf("%d", c.Writer.Status())).Inc()
-		}
 	}
 }
-
-// Measure abstracts the HTTP handler implementation by only requesting a reporter, this
-// reporter will return the required data to be measured.
-// it accepts a next function that will be called as the wrapped logic before and after
-// measurement actions.
-// func (m Middleware) Measure(handlerID string, reporter Reporter, next func()) {
-// 	ctx := reporter.Context()
-//
-// 	// func (r *reporter) Method() string { return r.c.Request.Method }
-// 	//
-// 	// func (r *reporter) Context() context.Context { return r.c.Request.Context() }
-// 	//
-// 	// func (r *reporter) URLPath() string { return r.c.FullPath() }
-// 	//
-// 	// func (r *reporter) StatusCode() int { return r.c.Writer.Status() }
-// 	//
-// 	// func (r *reporter) BytesWritten() int64 { return int64(r.c.Writer.Size()) }
-//
-// 	// If there isn't predefined handler ID we
-// 	// set that ID as the URL path.
-// 	hid := handlerID
-// 	if handlerID == "" {
-// 		hid = reporter.URLPath()
-// 	}
-//
-// 	// Measure inflights if required.
-// 	if !m.cfg.DisableMeasureInflight {
-// 		props := metrics.HTTPProperties{
-// 			Service: m.cfg.Service,
-// 			ID:      hid,
-// 		}
-// 		m.cfg.Recorder.AddInflightRequests(ctx, props, 1)
-// 		defer m.cfg.Recorder.AddInflightRequests(ctx, props, -1)
-// 	}
-//
-// 	// Start the timer and when finishing measure the duration.
-// 	start := time.Now()
-// 	defer func() {
-// 		duration := time.Since(start)
-//
-// 		// If we need to group the status code, it uses the
-// 		// first number of the status code because is the least
-// 		// required identification way.
-// 		var code string
-// 		if m.cfg.GroupedStatus {
-// 			code = fmt.Sprintf("%dxx", reporter.StatusCode()/100)
-// 		} else {
-// 			code = strconv.Itoa(reporter.StatusCode())
-// 		}
-//
-// 		props := metrics.HTTPReqProperties{
-// 			Service: m.cfg.Service,
-// 			ID:      hid,
-// 			Method:  reporter.Method(),
-// 			Code:    code,
-// 		}
-// 		m.cfg.Recorder.ObserveHTTPRequestDuration(ctx, props, duration)
-//
-// 		// Measure size of response if required.
-// 		if !m.cfg.DisableMeasureSize {
-// 			m.cfg.Recorder.ObserveHTTPResponseSize(ctx, props, reporter.BytesWritten())
-// 		}
-// 	}()
-//
-// 	// Call the wrapped logic.
-// 	next()
-// }.

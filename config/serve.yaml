@@ -11,4 +11,5 @@ endpoints:
 
 logging:
   json: true
+  metrics: false
   level: debug
