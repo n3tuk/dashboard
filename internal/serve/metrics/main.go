@@ -28,7 +28,7 @@ func NewService() *Service {
 	router := gin.New()
 
 	router.Use(middleware.Logger())
-	router.Use(middleware.Prometheus())
+	router.Use(middleware.Prometheus("metrics"))
 	router.Use(gin.Recovery())
 
 	proxies := viper.GetStringSlice("endpoints.proxies")
