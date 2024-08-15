@@ -27,7 +27,10 @@ type Service struct {
 func NewService() *Service {
 	router := gin.New()
 
-	router.Use(middleware.Logger())
+	if viper.GetBool("logging.metrics") {
+		router.Use(middleware.Logger())
+	}
+
 	router.Use(middleware.Prometheus("metrics"))
 	router.Use(gin.Recovery())
 

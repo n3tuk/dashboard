@@ -171,6 +171,9 @@
         "level": {
           "$ref": "#/$defs/logging-level"
         },
+        "metrics": {
+          "$ref": "#/$defs/logging-metrics"
+        },
         "json": {
           "$ref": "#/$defs/logging-json"
         }
@@ -181,9 +184,15 @@
       "type": "string",
       "enum": ["debug", "info", "warning", "error"]
     },
+    "logging-metrics": {
+      "description": "Set whether or not to log requests to the metrics port",
+      "type": "boolean",
+      "default": false
+    },
     "logging-json": {
       "description": "Set whether or not to use JSON-based structured logging",
-      "type": "boolean"
+      "type": "boolean",
+      "default": false
     }
   },
   "type": "object",
