@@ -19,6 +19,7 @@ jobs:
       matrix:
         version:
           - '1.22'
+          - '1.23'
         platform:
           - ubuntu-latest
       fail-fast: false
