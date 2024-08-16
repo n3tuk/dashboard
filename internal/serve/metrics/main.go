@@ -27,11 +27,15 @@ type Service struct {
 func NewService() *Service {
 	router := gin.New()
 
+	name := viper.GetString("cluster.name")
+	address := viper.GetString("endpoints.bind.address")
+	port := viper.GetString("endpoints.bind.port.metrics")
+
 	if viper.GetBool("logging.metrics") {
 		router.Use(middleware.Logger())
 	}
 
-	router.Use(middleware.Prometheus("metrics"))
+	router.Use(middleware.Prometheus(name, "metrics"))
 	router.Use(gin.Recovery())
 
 	proxies := viper.GetStringSlice("endpoints.proxies")
@@ -48,9 +52,6 @@ func NewService() *Service {
 		}
 	}
 
-	address := viper.GetString("endpoints.bind.address")
-	port := viper.GetString("endpoints.bind.port.metrics")
-
 	service := &Service{
 		router: router,
 		server: &http.Server{
@@ -66,7 +67,8 @@ func NewService() *Service {
 		shuttingDown: false,
 
 		attr: slog.Group(
-			"server",
+			"cluster",
+			slog.String("name", name),
 			slog.String("service", "metrics"),
 			slog.String("address", address),
 			slog.String("port", port),

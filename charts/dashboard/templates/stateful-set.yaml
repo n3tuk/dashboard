@@ -70,6 +70,7 @@ spec:
             - --log-level={{ .Values.pod.logging.level }}
             - --log-json={{ if .Values.pod.logging.json }}true{{ else }}false{{ end }}
             - --address=0.0.0.0
+            - --cluster-name={{ include "dashboard.fullname" . }}
             - --web-port={{ .Values.service.webPort }}
             - --metrics-port={{ .Values.service.metricsPort }}
             {{- range .Values.pod.extraArgs }}
