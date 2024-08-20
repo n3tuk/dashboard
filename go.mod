@@ -5,7 +5,7 @@ go 1.22.4
 require (
 	github.com/MakeNowJust/heredoc/v2 v2.0.1
 	github.com/gin-gonic/gin v1.10.0
-	github.com/prometheus/client_golang v1.20.0
+	github.com/prometheus/client_golang v1.20.1
 	github.com/samber/slog-gin v1.13.4
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
