@@ -111,7 +111,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /healthz
-              port: metric
+              port: metrics
           {{-   with .Values.pod.probes.readiness }}
             periodSeconds: {{ .periodSeconds }}
             initialDelaySeconds: {{ .initialDelaySeconds }}
