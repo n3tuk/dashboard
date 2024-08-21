@@ -27,6 +27,10 @@ const (
 )
 
 var (
+	// name is the defaut name for the cluster when one or more dashboard
+	// instances operate together.
+	name = "dashboard"
+
 	// host is the hostname or IPv4/IPv6 address to bind the service to on
 	// startup.
 	host = "localhost"
@@ -128,6 +132,10 @@ func init() {
 	flags.Bool("log-metrics", false, "Set whether to log metrics port requests")
 	_ = viper.BindPFlag("logging.metrics", flags.Lookup("log-metrics"))
 
+	viper.SetDefault("cluster.name", name)
+	flags.StringP("cluster-name", "n", name, "The name of the cluster")
+	_ = viper.BindPFlag("cluster.name", flags.Lookup("cluster-name"))
+
 	rootCmd.AddCommand(serveCmd)
 }
 
@@ -167,7 +175,7 @@ func runServe(_ *cobra.Command, _ []string) error {
 	// Start the web service first as the metrics service will report the health
 	// of the service, so we should be ready to receive requests before the
 	// service is reporting as healthy
-	go w.Start(e)
+	go w.Start(e, m.SetWebHealth)
 	go m.Start(e)
 
 	// Restore default behaviour on the interrupt signal and notify user of shutdown.

@@ -4,6 +4,24 @@
   "title": "dashboard serve Configuration File",
   "description": "The configuration file for the dashboard application when running as a service",
   "$defs": {
+    "cluster": {
+      "title": "Cluster Configuration",
+      "description": "The configuration for the cluster",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/cluster-name"
+        }
+      }
+    },
+    "cluster-name": {
+      "title": "Cluster Name",
+      "description": "The name of the cluster when connecting one or more dashboard instances",
+      "type": "string",
+      "format": "hostname",
+      "examples": ["dashboard", "dashboard.n3t.uk"]
+    },
     "endpoints": {
       "title": "Application Endpoints Configuration",
       "description": "The configuration for the application endpoints",
@@ -198,6 +216,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "cluster": {
+      "$ref": "#/$defs/cluster"
+    },
     "endpoints": {
       "$ref": "#/$defs/endpoints"
     },

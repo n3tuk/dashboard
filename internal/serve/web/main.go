@@ -19,13 +19,20 @@ type Service struct {
 	attr   slog.Attr
 	router *gin.Engine
 	server *http.Server
+	health func(bool)
 }
+
+var ErrServiceNotConfigured = errors.New("service not configured")
 
 func NewService() *Service {
 	router := gin.New()
 
+	name := viper.GetString("cluster.name")
+	address := viper.GetString("endpoints.bind.address")
+	port := viper.GetString("endpoints.bind.port.web")
+
 	router.Use(middleware.Logger())
-	router.Use(middleware.Prometheus("web"))
+	router.Use(middleware.Prometheus(name, "web"))
 	router.Use(gin.Recovery())
 
 	proxies := viper.GetStringSlice("endpoints.proxies")
@@ -42,9 +49,6 @@ func NewService() *Service {
 		}
 	}
 
-	address := viper.GetString("endpoints.bind.address")
-	port := viper.GetString("endpoints.bind.port.web")
-
 	service := &Service{
 		router: router,
 		server: &http.Server{
@@ -58,7 +62,8 @@ func NewService() *Service {
 		},
 
 		attr: slog.Group(
-			"server",
+			"cluster",
+			slog.String("name", name),
 			slog.String("service", "web"),
 			slog.String("address", address),
 			slog.String("port", port),
@@ -71,19 +76,26 @@ func NewService() *Service {
 	return service
 }
 
-func (s *Service) Start(e chan error) {
+func (s *Service) Start(e chan error, health func(bool)) {
+	s.health = health
+
 	if s.server == nil {
+		health(false)
 		slog.Error(
 			"Failed to start web service",
 			slog.Group("error", slog.String("message", "service not configured")),
 			s.attr,
 		)
+		e <- ErrServiceNotConfigured
 	}
 
 	slog.Info("Starting dashboard web service", s.attr)
 
+	health(true)
+
 	err := s.server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		health(false)
 		slog.Error(
 			"Failed to start web service",
 			slog.Group("error", slog.String("message", err.Error())),
@@ -100,6 +112,8 @@ func (s *Service) Shutdown(timeout time.Duration) error {
 	// to finish the request it is currently handling before being shut down
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
+	s.health(false)
 
 	if err := s.server.Shutdown(ctx); err != nil {
 		return err

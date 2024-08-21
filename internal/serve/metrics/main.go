@@ -18,20 +18,26 @@ import (
 )
 
 type Service struct {
-	attr         slog.Attr
-	router       *gin.Engine
-	server       *http.Server
-	shuttingDown bool
+	attr   slog.Attr
+	router *gin.Engine
+	server *http.Server
+	health *healthz.Health
 }
+
+var ErrServiceNotConfigured = errors.New("service not configured")
 
 func NewService() *Service {
 	router := gin.New()
+
+	name := viper.GetString("cluster.name")
+	address := viper.GetString("endpoints.bind.address")
+	port := viper.GetString("endpoints.bind.port.metrics")
 
 	if viper.GetBool("logging.metrics") {
 		router.Use(middleware.Logger())
 	}
 
-	router.Use(middleware.Prometheus("metrics"))
+	router.Use(middleware.Prometheus(name, "metrics"))
 	router.Use(gin.Recovery())
 
 	proxies := viper.GetStringSlice("endpoints.proxies")
@@ -48,9 +54,6 @@ func NewService() *Service {
 		}
 	}
 
-	address := viper.GetString("endpoints.bind.address")
-	port := viper.GetString("endpoints.bind.port.metrics")
-
 	service := &Service{
 		router: router,
 		server: &http.Server{
@@ -63,10 +66,11 @@ func NewService() *Service {
 			Handler: router,
 		},
 
-		shuttingDown: false,
+		health: healthz.NewHealth(),
 
 		attr: slog.Group(
-			"server",
+			"cluster",
+			slog.String("name", name),
 			slog.String("service", "metrics"),
 			slog.String("address", address),
 			slog.String("port", port),
@@ -75,7 +79,7 @@ func NewService() *Service {
 
 	Attach(router)
 	alive.Attach(router)
-	healthz.Attach(router, &service.shuttingDown)
+	healthz.Attach(router, service.health)
 
 	// Set up the default 404 handler
 	router.NoRoute(notFound)
@@ -85,17 +89,22 @@ func NewService() *Service {
 
 func (s *Service) Start(e chan error) {
 	if s.server == nil {
+		s.health.Metrics = false
 		slog.Error(
 			"Failed to start metrics service",
 			slog.Group("error", slog.String("message", "service not configured")),
 			s.attr,
 		)
+		e <- ErrServiceNotConfigured
 	}
 
 	slog.Info("Starting dashboard metrics service", s.attr)
 
+	s.health.Metrics = true
+
 	err := s.server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		s.health.Metrics = false
 		slog.Error(
 			"Failed to start metrics service",
 			slog.Group("error", slog.String("message", err.Error())),
@@ -107,7 +116,15 @@ func (s *Service) Start(e chan error) {
 
 func (s *Service) PrepareShutdown() {
 	slog.Info("Preparing for metrics service for web service shutdown", s.attr)
-	s.shuttingDown = true
+	s.health.Terminating = true
+}
+
+func (s *Service) SetWebHealth(status bool) {
+	s.health.Web = status
+}
+
+func (s *Service) SetMetricsHealth(status bool) {
+	s.health.Metrics = status
 }
 
 func (s *Service) Shutdown(timeout time.Duration) error {
@@ -117,6 +134,8 @@ func (s *Service) Shutdown(timeout time.Duration) error {
 	// to finish the request it is currently handling before being shut down
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
+	s.SetMetricsHealth(false)
 
 	if err := s.server.Shutdown(ctx); err != nil {
 		return err
