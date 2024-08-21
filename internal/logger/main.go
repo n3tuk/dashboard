@@ -47,6 +47,8 @@ func Start(attrs *map[string]string) {
 			),
 		)
 	}
+
+	slog.SetLogLoggerLevel(level)
 }
 
 // getLevel retrieves the required logging level from either the defaults, the

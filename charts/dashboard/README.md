@@ -51,10 +51,6 @@ configure it through the `values.yaml` file.
 | deployment.revisionHistoryLimit | int | `10` | Set the number of deployments which should be kept to enable a rollback of the deployment in the event of any issues or failures |
 | deployment.annotations | object | `{}` | Set any additional annotations which should be added to the Deployment resource |
 | deployment.labels | object | `{}` | Set any additional labels which should be added to the Deployment resource |
-| persistentVolumeClaim.create | bool | `false` | Set whether or not to create a PersistentVolumeClaim resource for the dashboard service and attach it to the Pods |
-| persistentVolumeClaim.storageClassName | string | `nil` | Set the name of the StorageClass to use for the volumes in the PersistentVolumeClaim |
-| persistentVolumeClaim.size | string | `"32Gi"` | Set the size of each PersistentVolumeClaim to be created |
-| persistentVolumeClaim.accessModes | list | `["ReadWriteOnce"]` | Configure the access modes to be set on the PersistentVolumeClaim |
 | pod.image.repository | string | `"ghcr.io/n3tuk/dashboard"` | Set the URI for the container image to be deployed for the dashboard Deployment |
 | pod.image.pullPolicy | string | `"IfNotPresent"` | Set the pull policy for the host running each Pod of the deployment |
 | pod.annotations | object | `{}` | Set any additional annotations which should be added to the Ingress resource |

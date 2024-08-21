@@ -19,7 +19,10 @@ type Service struct {
 	attr   slog.Attr
 	router *gin.Engine
 	server *http.Server
+	health func(bool)
 }
+
+var ErrServiceNotConfigured = errors.New("service not configured")
 
 func NewService() *Service {
 	router := gin.New()
@@ -73,19 +76,26 @@ func NewService() *Service {
 	return service
 }
 
-func (s *Service) Start(e chan error) {
+func (s *Service) Start(e chan error, health func(bool)) {
+	s.health = health
+
 	if s.server == nil {
+		health(false)
 		slog.Error(
 			"Failed to start web service",
 			slog.Group("error", slog.String("message", "service not configured")),
 			s.attr,
 		)
+		e <- ErrServiceNotConfigured
 	}
 
 	slog.Info("Starting dashboard web service", s.attr)
 
+	health(true)
+
 	err := s.server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		health(false)
 		slog.Error(
 			"Failed to start web service",
 			slog.Group("error", slog.String("message", err.Error())),
@@ -102,6 +112,8 @@ func (s *Service) Shutdown(timeout time.Duration) error {
 	// to finish the request it is currently handling before being shut down
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+
+	s.health(false)
 
 	if err := s.server.Shutdown(ctx); err != nil {
 		return err

@@ -100,19 +100,6 @@ deployment:
   # resource
   labels: {}
 
-persistentVolumeClaim:
-  # -- Set whether or not to create a PersistentVolumeClaim resource for the
-  # dashboard service and attach it to the Pods
-  create: false
-  # -- (string) Set the name of the StorageClass to use for the volumes in the
-  # PersistentVolumeClaim
-  storageClassName:
-  # -- Set the size of each PersistentVolumeClaim to be created
-  size: 32Gi
-  # -- Configure the access modes to be set on the PersistentVolumeClaim
-  accessModes:
-    - ReadWriteOnce
-
 pod:
   image:
     # -- Set the URI for the container image to be deployed for the dashboard
