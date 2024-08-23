@@ -54,11 +54,15 @@ spec:
         - name: {{ .Chart.Name | quote }}
           image: "{{ .Values.pod.image.repository }}:{{ .Values.pod.image.tag | default (printf "v%s" .Chart.AppVersion) }}"
           imagePullPolicy: {{ .Values.pod.image.pullPolicy }}
+          env:
+            - name: DASHBOARD_ENDPOINTS_BIND_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           args:
             - serve
             - --log-level={{ .Values.pod.logging.level }}
             - --log-json={{ if .Values.pod.logging.json }}true{{ else }}false{{ end }}
-            - --address=0.0.0.0
             - --cluster-name={{ include "dashboard.fullname" . }}
             - --web-port={{ .Values.service.webPort }}
             - --metrics-port={{ .Values.service.metricsPort }}
