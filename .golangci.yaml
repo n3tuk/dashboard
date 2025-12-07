@@ -65,6 +65,9 @@ linters:
     # Computes and checks the cyclomatic complexity of functions.
     # (replaced by cyclop)
     - gocyclo
+    # Check logger calls conform to a specific format (seems to have some issues
+    # around the use of structured logging currently)
+    - loggercheck
     # Nlreturn checks for a new line before return and branch statements to
     # increase code clarity
     # (this is better managed by wsl)
@@ -80,8 +83,7 @@ linters:
     - wrapcheck
 
     ## Deprecated
-    - execinquery
-    - gomnd
+    - tenv
 
 run:
   timeout: 1m
