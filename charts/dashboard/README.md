@@ -40,6 +40,11 @@ configure it through the `values.yaml` file.
 | ingress.labels | object | `{}` | Set any additional labels which should be added to the Ingress resource |
 | ingress.hosts | list | `[]` | Set the hostname and path mappings for this service on the Ingress |
 | ingress.tls | list | `[]` | Set the TLS secret and hostnames for this service on the Ingress |
+| httpRoute.create | bool | `false` | Set whether or not to create the HTTPRoute resource for the dashboard Service using the Gateway APIs |
+| httpRoute.parentRefs | list | `[]` | Set the parent references targeting the Gateways which will route traffic to this service |
+| httpRoute.hostnames | list | `[]` | Set the hostnames this HTTPRoute should respond to via the Gateways |
+| httpRoute.annotations | object | `{}` | Set any additional annotations which should be added to the HTTPRoute resource |
+| httpRoute.labels | object | `{}` | Set any additional labels which should be added to the HTTPRoute resource |
 | serviceAccount.create | bool | `false` | Set whether or not to create a ServiceAccount resource for the dashboard service |
 | serviceAccount.name | string | `nil` | Override the name of the ServiceAccount @default `.Chart.Name` |
 | serviceAccount.annotations | object | `{}` | Set any additional annotations which should be added to the ServiceAccount resource |

@@ -90,6 +90,7 @@ func NewService() *Service {
 func (s *Service) Start(e chan error) {
 	if s.server == nil {
 		s.health.Metrics = false
+		//nolint: loggercheck // The s.attr here points to an slog.Group
 		slog.Error(
 			"Failed to start metrics service",
 			slog.Group("error", slog.String("message", "service not configured")),
@@ -98,6 +99,7 @@ func (s *Service) Start(e chan error) {
 		e <- ErrServiceNotConfigured
 	}
 
+	//nolint: loggercheck // The s.attr here points to an slog.Group
 	slog.Info("Starting dashboard metrics service", s.attr)
 
 	s.health.Metrics = true
@@ -105,6 +107,7 @@ func (s *Service) Start(e chan error) {
 	err := s.server.ListenAndServe()
 	if err != nil && !errors.Is(err, http.ErrServerClosed) {
 		s.health.Metrics = false
+		//nolint: loggercheck // The s.attr here points to an slog.Group
 		slog.Error(
 			"Failed to start metrics service",
 			slog.Group("error", slog.String("message", err.Error())),

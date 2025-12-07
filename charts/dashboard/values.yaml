@@ -61,6 +61,25 @@ ingress:
   #    hosts:
   #      - dashboard.local
 
+httpRoute:
+  # -- Set whether or not to create the HTTPRoute resource for the dashboard
+  # Service using the Gateway APIs
+  create: false
+  # -- Set the parent references targeting the Gateways which will route traffic
+  # to this service
+  parentRefs: []
+  # - group: gateway.networking.k8s.io
+  #   kind: Gateway
+  #   namespace: example
+  #   name: default
+  # -- Set the hostnames this HTTPRoute should respond to via the Gateways
+  hostnames: []
+  # -- Set any additional annotations which should be added to the HTTPRoute
+  # resource
+  annotations: {}
+  # -- Set any additional labels which should be added to the HTTPRoute resource
+  labels: {}
+
 serviceAccount:
   # -- Set whether or not to create a ServiceAccount resource for the dashboard
   # service
